@@ -1,0 +1,9 @@
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * CHAT ROUTES
+ * Endpoints para el Widget Chat y State Machine
+ * ═══════════════════════════════════════════════════════════════════════════
+ */
+declare const router: import("express-serve-static-core").Router;
+export default router;
+//# sourceMappingURL=chat.routes.d.ts.map

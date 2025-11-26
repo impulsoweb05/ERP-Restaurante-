@@ -1,0 +1,95 @@
+version: '3.8'
+
+services:
+  # ═══════════════════════════════════════════════════════════════════════════
+  # PostgreSQL Database
+  # ═══════════════════════════════════════════════════════════════════════════
+  postgres:
+    image: postgres:15-alpine
+    container_name: restaurante-postgres
+    environment:
+      POSTGRES_DB: restaurante_erp
+      POSTGRES_USER: directus
+      POSTGRES_PASSWORD: directus_password_123
+      PGDATA: /var/lib/postgresql/data
+      TZ: America/Bogota
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./init-data.sql:/docker-entrypoint-initdb.d/02-init-data.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U directus"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - restaurante-network
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # Directus CMS + API
+  # ═══════════════════════════════════════════════════════════════════════════
+  directus:
+    image: directus/directus:latest
+    container_name: restaurante-directus
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Database
+      DB_CLIENT: postgres
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: restaurante_erp
+      DB_USER: directus
+      DB_PASSWORD: directus_password_123
+      DB_SSL: 'false'
+
+      # Admin credentials
+      ADMIN_EMAIL: admin@restaurante.com
+      ADMIN_PASSWORD: Admin@12345
+
+      # Security
+      KEY: your-secret-key-change-in-production
+      SECRET: your-secret-value-change-in-production
+
+      # URLs
+      PUBLIC_URL: http://localhost:8055
+
+      # Timezone
+      TZ: America/Bogota
+
+      # Extensions
+      EXTENSIONS_PATH: ./extensions
+
+      # Email (Nodemailer - optional for notifications)
+      MAIL_FROM: noreply@restaurante.com
+      MAIL_TRANSPORT: smtp://localhost:1025
+    ports:
+      - "8055:8055"
+    volumes:
+      - directus_uploads:/directus/uploads
+      - directus_database:/directus/database
+      - directus_extensions:/directus/extensions
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8055/server/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - restaurante-network
+
+volumes:
+  postgres_data:
+    driver: local
+  directus_uploads:
+    driver: local
+  directus_database:
+    driver: local
+  directus_extensions:
+    driver: local
+
+networks:
+  restaurante-network:
+    driver: bridge

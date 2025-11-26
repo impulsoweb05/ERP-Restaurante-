@@ -1,0 +1,224 @@
+2025-11-25 06:17:00 [info]: 🔍 Validating PostgreSQL connection...
+2025-11-25 06:17:00 [info]: PostgreSQL pool initialized {
+  "host": "localhost",
+  "port": 5432,
+  "database": "restaurante_erp"
+}
+2025-11-25 06:17:02 [error]: ❌ Failed to connect to PostgreSQL {
+  "error": "error: password authentication failed for user \"postgres\""
+}
+2025-11-25 06:17:02 [warn]: ⚠️  PostgreSQL not available yet. Will retry on first request.
+2025-11-25 06:17:02 [info]: ✅ Backend running at http://localhost:4000 {
+  "environment": "development",
+  "database": "⚠️ (retrying)"
+}
+2025-11-25 06:17:07 [error]: Database query error {
+  "query": "SELECT * FROM schedules WHERE day_of_week = $1",
+  "error": "error: password authentication failed for user \"postgres\""
+}
+2025-11-25 06:17:07 [error]: Error validating schedule password authentication failed for user "postgres" {
+  "length": 104,
+  "name": "error",
+  "severity": "FATAL",
+  "code": "28P01",
+  "file": "auth.c",
+  "line": "334",
+  "routine": "auth_failed",
+  "stack": "error: password authentication failed for user \"postgres\"\n    at /home/claude/restaurante-erp/backend/node_modules/pg-pool/index.js:45:11\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async query (/home/claude/restaurante-erp/backend/dist/config/database.js:47:16)\n    at async ScheduleService.isOpenNow (/home/claude/restaurante-erp/backend/dist/services/ScheduleService.js:24:28)\n    at async /home/claude/restaurante-erp/backend/dist/routes/schedule.routes.js:20:24"
+}
+2025-11-25 06:17:07 [error]: Error in GET /api/schedule/check Failed to validate schedule {
+  "stack": "Error: Failed to validate schedule\n    at ScheduleService.isOpenNow (/home/claude/restaurante-erp/backend/dist/services/ScheduleService.js:58:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async /home/claude/restaurante-erp/backend/dist/routes/schedule.routes.js:20:24"
+}
+2025-11-25 11:48:15 [[32minfo[39m]: PostgreSQL pool initialized {
+  "host": "localhost",
+  "port": 5432,
+  "database": "restaurante_erp"
+}
+2025-11-25 11:48:17 [[32minfo[39m]: 🔍 Validating PostgreSQL connection...
+2025-11-25 11:48:17 [[32minfo[39m]: ✅ PostgreSQL connection verified
+2025-11-25 11:48:17 [[32minfo[39m]: WebSocket Server initialized on /ws
+2025-11-25 11:48:17 [[32minfo[39m]: ✅ WebSocket Server initialized on ws://localhost:4000/ws
+2025-11-25 11:48:17 [[32minfo[39m]: 🕒 Initializing cron jobs...
+2025-11-25 11:48:17 [[32minfo[39m]: ✓ Reservation auto-release job scheduled (every 5 minutes)
+2025-11-25 11:48:17 [[32minfo[39m]: ✓ Session cleanup job scheduled (every hour)
+2025-11-25 11:48:17 [[32minfo[39m]: ✓ Notification cleanup job scheduled (daily at 3 AM)
+2025-11-25 11:48:17 [[32minfo[39m]: ✅ 3 cron jobs initialized
+2025-11-25 11:48:17 [[32minfo[39m]: ✅ Backend running at http://localhost:4000 {
+  "environment": "development",
+  "database": "✅",
+  "websocket": "✅ /ws"
+}
+2025-11-25 11:50:00 [[34mdebug[39m]: Running reservation auto-release job...
+2025-11-25 11:55:00 [[34mdebug[39m]: Running reservation auto-release job...
+2025-11-25 11:56:06 [[32minfo[39m]: Customer created {
+  "customer_code": "CLI-1764089766336-352",
+  "phone": "3001234567"
+}
+2025-11-25 11:56:06 [[32minfo[39m]: Customer logged in {
+  "phone": "3001234567"
+}
+2025-11-25 11:56:06 [[32minfo[39m]: Customer logged in {
+  "phone": "3001234567"
+}
+2025-11-25 12:00:00 [[34mdebug[39m]: Running reservation auto-release job...
+2025-11-25 12:00:00 [[34mdebug[39m]: Running session cleanup job...
+2025-11-25 12:00:04 [[32minfo[39m]: Customer created {
+  "customer_code": "CLI-1764090003986-459",
+  "phone": "3109876543"
+}
+2025-11-25 12:00:04 [[32minfo[39m]: Customer logged in {
+  "phone": "3109876543"
+}
+2025-11-25 12:00:04 [[31merror[39m]: Error creating order invalid input syntax for type uuid: "" {
+  "length": 129,
+  "name": "error",
+  "severity": "ERROR",
+  "code": "22P02",
+  "where": "unnamed portal parameter $1 = ''",
+  "file": "uuid.c",
+  "line": "133",
+  "routine": "string_to_uuid",
+  "stack": "error: invalid input syntax for type uuid: \"\"\n    at /home/claude/restaurante-erp/backend/node_modules/pg/lib/client.js:545:17\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async Function.createOrder (/home/claude/restaurante-erp/backend/src/services/OrderService.ts:39:32)\n    at async /home/claude/restaurante-erp/backend/src/routes/orders.routes.ts:14:20"
+}
+2025-11-25 12:05:00 [[34mdebug[39m]: Running reservation auto-release job...
+2025-11-25 12:10:00 [[34mdebug[39m]: Running reservation auto-release job...
+2025-11-25 12:15:00 [[34mdebug[39m]: Running reservation auto-release job...
+2025-11-25 12:20:00 [[34mdebug[39m]: Running reservation auto-release job...
+2025-11-25 12:25:00 [[34mdebug[39m]: Running reservation auto-release job...
+2025-11-25 12:30:00 [[34mdebug[39m]: Running reservation auto-release job...
+2025-11-25 12:35:00 [[34mdebug[39m]: Running reservation auto-release job...
+2025-11-25 12:40:00 [[34mdebug[39m]: Running reservation auto-release job...
+2025-11-25 12:45:00 [[34mdebug[39m]: Running reservation auto-release job...
+2025-11-25 12:50:00 [[34mdebug[39m]: Running reservation auto-release job...
+2025-11-25 12:55:00 [[34mdebug[39m]: Running reservation auto-release job...
+2025-11-25 17:06:14 [[32minfo[39m]: PostgreSQL pool initialized {
+  "host": "localhost",
+  "port": 5432,
+  "database": "restaurante_erp"
+}
+2025-11-25 17:06:16 [[32minfo[39m]: 🔍 Validating PostgreSQL connection...
+2025-11-25 17:06:17 [[32minfo[39m]: ✅ PostgreSQL connection verified
+2025-11-25 17:06:17 [[32minfo[39m]: WebSocket Server initialized on /ws
+2025-11-25 17:06:17 [[32minfo[39m]: ✅ WebSocket Server initialized on ws://localhost:4000/ws
+2025-11-25 17:06:17 [[32minfo[39m]: 🕒 Initializing cron jobs...
+2025-11-25 17:06:17 [[32minfo[39m]: ✓ Reservation auto-release job scheduled (every 5 minutes)
+2025-11-25 17:06:17 [[32minfo[39m]: ✓ Session cleanup job scheduled (every hour)
+2025-11-25 17:06:17 [[32minfo[39m]: ✓ Notification cleanup job scheduled (daily at 3 AM)
+2025-11-25 17:06:17 [[32minfo[39m]: ✅ 3 cron jobs initialized
+2025-11-25 17:06:17 [[32minfo[39m]: ✅ Backend running at http://localhost:4000 {
+  "environment": "development",
+  "database": "✅",
+  "websocket": "✅ /ws"
+}
+2025-11-25 17:09:12 [[32minfo[39m]: 🛑 Shutting down gracefully...
+2025-11-25 17:23:40 [[32minfo[39m]: PostgreSQL pool initialized {
+  "host": "localhost",
+  "port": 5432,
+  "database": "restaurante_erp"
+}
+2025-11-25 17:23:43 [[32minfo[39m]: 🔍 Validating PostgreSQL connection...
+2025-11-25 17:23:44 [[32minfo[39m]: ✅ PostgreSQL connection verified
+2025-11-25 17:23:44 [[32minfo[39m]: WebSocket Server initialized on /ws
+2025-11-25 17:23:44 [[32minfo[39m]: ✅ WebSocket Server initialized on ws://localhost:4000/ws
+2025-11-25 17:23:44 [[32minfo[39m]: 🕒 Initializing cron jobs...
+2025-11-25 17:23:44 [[32minfo[39m]: ✓ Reservation auto-release job scheduled (every 5 minutes)
+2025-11-25 17:23:44 [[32minfo[39m]: ✓ Session cleanup job scheduled (every hour)
+2025-11-25 17:23:44 [[32minfo[39m]: ✓ Notification cleanup job scheduled (daily at 3 AM)
+2025-11-25 17:23:44 [[32minfo[39m]: ✅ 3 cron jobs initialized
+2025-11-25 17:23:44 [[32minfo[39m]: ✅ Backend running at http://localhost:4000 {
+  "environment": "development",
+  "database": "✅",
+  "websocket": "✅ /ws"
+}
+2025-11-25 17:25:00 [[34mdebug[39m]: Running reservation auto-release job...
+2025-11-25 17:30:00 [[34mdebug[39m]: Running reservation auto-release job...
+2025-11-25 17:35:00 [[34mdebug[39m]: Running reservation auto-release job...
+2025-11-25 17:40:00 [[34mdebug[39m]: Running reservation auto-release job...
+2025-11-25 17:45:00 [[34mdebug[39m]: Running reservation auto-release job...
+2025-11-25 17:50:00 [[34mdebug[39m]: Running reservation auto-release job...
+2025-11-25 17:55:00 [[34mdebug[39m]: Running reservation auto-release job...
+2025-11-25 18:00:00 [[34mdebug[39m]: Running reservation auto-release job...
+2025-11-25 18:00:00 [[34mdebug[39m]: Running session cleanup job...
+2025-11-25 18:05:00 [[34mdebug[39m]: Running reservation auto-release job...
+2025-11-25 18:10:00 [[34mdebug[39m]: Running reservation auto-release job...
+2025-11-25 18:11:23 [[32minfo[39m]: 🛑 Shutting down gracefully...
+2025-11-25 18:21:01 [[32minfo[39m]: PostgreSQL pool initialized {
+  "host": "localhost",
+  "port": 5432,
+  "database": "restaurante_erp"
+}
+2025-11-25 18:21:03 [[32minfo[39m]: 🔍 Validating PostgreSQL connection...
+2025-11-25 18:21:03 [[32minfo[39m]: ✅ PostgreSQL connection verified
+2025-11-25 18:21:03 [[32minfo[39m]: WebSocket Server initialized on /ws
+2025-11-25 18:21:03 [[32minfo[39m]: ✅ WebSocket Server initialized on ws://localhost:4000/ws
+2025-11-25 18:21:03 [[32minfo[39m]: 🕒 Initializing cron jobs...
+2025-11-25 18:21:03 [[32minfo[39m]: ✓ Reservation auto-release job scheduled (every 5 minutes)
+2025-11-25 18:21:03 [[32minfo[39m]: ✓ Session cleanup job scheduled (every hour)
+2025-11-25 18:21:03 [[32minfo[39m]: ✓ Notification cleanup job scheduled (daily at 3 AM)
+2025-11-25 18:21:03 [[32minfo[39m]: ✅ 3 cron jobs initialized
+2025-11-25 18:21:03 [[32minfo[39m]: ✅ Backend running at http://localhost:4000 {
+  "environment": "development",
+  "database": "✅",
+  "websocket": "✅ /ws"
+}
+2025-11-25 18:21:16 [[32minfo[39m]: Chat message received {
+  "sessionId": "a8702c1b-de3c-4def-9846-210c8a600f3a",
+  "messageLength": 4,
+  "hasPhone": false
+}
+2025-11-25 18:21:16 [[32minfo[39m]: Session created {
+  "sessionId": "a8702c1b-de3c-4def-9846-210c8a600f3a"
+}
+2025-11-25 18:21:16 [[32minfo[39m]: Hola {
+  "sessionId": "a8702c1b-de3c-4def-9846-210c8a600f3a",
+  "currentLevel": 0
+}
+2025-11-25 18:21:16 [[32minfo[39m]: Session level updated {
+  "sessionId": "a8702c1b-de3c-4def-9846-210c8a600f3a",
+  "newLevel": 1
+}
+2025-11-25 18:21:22 [[32minfo[39m]: Chat message received {
+  "sessionId": "a8702c1b-de3c-4def-9846-210c8a600f3a",
+  "messageLength": 1,
+  "hasPhone": false
+}
+2025-11-25 18:21:22 [[32minfo[39m]: 2 {
+  "sessionId": "a8702c1b-de3c-4def-9846-210c8a600f3a",
+  "currentLevel": 1
+}
+2025-11-25 18:21:22 [[32minfo[39m]: Session level updated {
+  "sessionId": "a8702c1b-de3c-4def-9846-210c8a600f3a",
+  "newLevel": 1
+}
+2025-11-25 18:21:27 [[32minfo[39m]: Chat message received {
+  "sessionId": "a8702c1b-de3c-4def-9846-210c8a600f3a",
+  "messageLength": 10,
+  "hasPhone": false
+}
+2025-11-25 18:21:27 [[32minfo[39m]: 3012345678 {
+  "sessionId": "a8702c1b-de3c-4def-9846-210c8a600f3a",
+  "currentLevel": 1
+}
+2025-11-25 18:25:00 [[34mdebug[39m]: Running reservation auto-release job...
+2025-11-25 18:30:00 [[34mdebug[39m]: Running reservation auto-release job...
+2025-11-25 18:35:00 [[34mdebug[39m]: Running reservation auto-release job...
+2025-11-25 18:40:00 [[34mdebug[39m]: Running reservation auto-release job...
+2025-11-25 18:45:00 [[34mdebug[39m]: Running reservation auto-release job...
+2025-11-25 18:50:00 [[34mdebug[39m]: Running reservation auto-release job...
+2025-11-25 18:55:00 [[34mdebug[39m]: Running reservation auto-release job...
+2025-11-25 19:00:00 [[34mdebug[39m]: Running reservation auto-release job...
+2025-11-25 19:00:00 [[34mdebug[39m]: Running session cleanup job...
+2025-11-25 19:05:00 [[34mdebug[39m]: Running reservation auto-release job...
+2025-11-25 19:10:00 [[34mdebug[39m]: Running reservation auto-release job...
+2025-11-25 19:15:00 [[34mdebug[39m]: Running reservation auto-release job...
+2025-11-25 19:20:00 [[34mdebug[39m]: Running reservation auto-release job...
+2025-11-25 19:25:00 [[34mdebug[39m]: Running reservation auto-release job...
+2025-11-25 19:30:00 [[34mdebug[39m]: Running reservation auto-release job...
+2025-11-25 19:35:00 [[34mdebug[39m]: Running reservation auto-release job...
+2025-11-25 19:40:00 [[34mdebug[39m]: Running reservation auto-release job...
+2025-11-25 19:45:00 [[34mdebug[39m]: Running reservation auto-release job...
+2025-11-25 19:50:00 [[34mdebug[39m]: Running reservation auto-release job...
+2025-11-25 19:55:00 [[34mdebug[39m]: Running reservation auto-release job...
+2025-11-25 20:00:00 [[34mdebug[39m]: Running reservation auto-release job...
+2025-11-25 20:00:00 [[34mdebug[39m]: Running session cleanup job...
+2025-11-25 20:05:00 [[34mdebug[39m]: Running reservation auto-release job...
