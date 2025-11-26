@@ -24,15 +24,22 @@ export const useWebSocket = (token: string | null): WebSocketHook => {
   // Initialize audio for notifications
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      audioRef.current = new Audio('/sounds/notification.mp3');
-      audioRef.current.volume = sound.volume;
+      const audio = new Audio('/sounds/notification.mp3');
+      audio.volume = sound.volume;
+      // Pre-load audio and handle missing file gracefully
+      audio.addEventListener('error', () => {
+        console.warn('Notification sound not found. Add notification.mp3 to /public/sounds/');
+      });
+      audioRef.current = audio;
     }
   }, [sound.volume]);
 
   const playNotificationSound = useCallback(() => {
     if (sound.enabled && sound.newOrderSound && audioRef.current) {
       audioRef.current.currentTime = 0;
-      audioRef.current.play().catch(console.error);
+      audioRef.current.play().catch(() => {
+        // Silently fail if audio cannot be played (file missing or autoplay blocked)
+      });
     }
   }, [sound.enabled, sound.newOrderSound]);
 
