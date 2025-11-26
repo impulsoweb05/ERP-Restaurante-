@@ -95,7 +95,7 @@ export const fetchCategories = async (): Promise<ApiResponse<Category[]>> => {
 };
 
 export const fetchProducts = async (params?: { categoryId?: string; status?: string }): Promise<ApiResponse<MenuItem[]>> => {
-  const response = await api.get('/menu/items', { params: { ...params, status: 'active' } });
+  const response = await api.get('/menu/items', { params: { ...params, status: params?.status || 'active' } });
   return response.data;
 };
 

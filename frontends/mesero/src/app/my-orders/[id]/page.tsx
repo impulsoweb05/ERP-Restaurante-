@@ -177,9 +177,9 @@ function OrderDetailContent() {
                     {statusInfo.label}
                   </span>
                   {index < 4 && (
-                    <div className={`h-0.5 w-full mt-5 absolute ${
+                    <div className={`h-0.5 w-full mt-5 absolute left-1/2 ${
                       isPast ? 'bg-green-300' : 'bg-gray-200'
-                    }`} style={{ left: '50%' }} />
+                    }`} />
                   )}
                 </div>
               );

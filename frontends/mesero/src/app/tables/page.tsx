@@ -306,7 +306,7 @@ export default function TablesPage() {
                 <div className="text-center text-gray-500 py-4">
                   <span className="text-2xl mb-2 block">📅</span>
                   <p>Esta mesa tiene una reserva.</p>
-                  <p className="text-sm">Usa el botón &quot;Cliente Llegó&quot; cuando llegue.</p>
+                  <p className="text-sm">Usa el botón &ldquo;Cliente Llegó&rdquo; cuando llegue.</p>
                 </div>
               )}
 
