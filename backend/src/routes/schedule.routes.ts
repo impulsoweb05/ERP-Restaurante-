@@ -33,6 +33,27 @@ router.get('/check', async (req: Request, res: Response) => {
 });
 
 /**
+ * GET /api/schedule/is-open
+ * Alias para /check - Verificar si el restaurante está abierto ahora
+ * CRÍTICO: Usado por frontends para validar disponibilidad
+ */
+router.get('/is-open', async (req: Request, res: Response) => {
+  try {
+    const result = await ScheduleService.isOpenNow();
+    res.json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    logger.error('Error in GET /api/schedule/is-open', error as Error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to check if open'
+    });
+  }
+});
+
+/**
  * GET /api/schedule
  * Obtener todos los horarios de la semana
  */

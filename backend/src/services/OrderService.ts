@@ -230,6 +230,27 @@ export class OrderService {
     }
   }
 
+  /**
+   * Obtener todos los pedidos (para admin/meseros)
+   */
+  static async getAllOrders(limit: number = 50): Promise<{ success: boolean; orders: Order[] }> {
+    try {
+      const result = await query(
+        `SELECT * FROM orders
+         ORDER BY created_at DESC
+         LIMIT $1`,
+        [limit]
+      );
+      return {
+        success: true,
+        orders: result.rows
+      };
+    } catch (error) {
+      logger.error('Error getting all orders', error as Error);
+      throw error;
+    }
+  }
+
   // Alias para routes
   static async updateOrderStatus(
     orderId: string,
