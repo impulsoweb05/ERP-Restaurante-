@@ -494,3 +494,303 @@
   ⏱️ TIEMPO MÍNIMO PARA PRODUCCIÓN: 4 SEMANAS
 
   Calificación final: 2.5/10 - NO DEPLOYABLE
+
+
+
+
+   🔴 HALLAZGO CRÍTICO #1: WIDGET NO MUESTRA MENÚS
+
+  LO QUE DIJE ANTES (INCORRECTO):
+
+  "Widget Chat (80%) - State Machine completo, funcional"
+
+  LA REALIDAD:
+
+  EL WIDGET ESTÁ ROTO. NO PUEDE MOSTRAR PRODUCTOS.
+
+  EVIDENCIA:
+  // widget/src/chat-api.js - SOLO 3 endpoints:
+  1. POST /api/chat/message
+  2. GET /api/chat/session/:id
+  3. POST /api/chat/reset
+
+  // ❌ NO HAY:
+  - GET /api/menu/categories
+  - GET /api/menu/subcategories/:id
+  - GET /api/menu/items
+
+  CONSECUENCIA:
+  - El State Machine funciona (niveles 0-15)
+  - PERO cuando llega a nivel 2 (categorías) → NO HAY DATOS
+  - El backend devuelve opciones pero el widget NO LAS MUESTRA
+  - Cliente NO PUEDE seleccionar productos
+  - EL WIDGET ES INÚTIL 🔴🔴🔴
+
+  COMPLETITUD REAL: 40% (no 80%)
+
+  ---
+  ✅ HALLAZGO #2: SÍ HAY 153 PRODUCTOS EN SEED DATA
+
+  Productos por categoría:
+
+  ENTRADAS:          18 productos (MENU-001 a MENU-018)
+  PICADAS:           18 productos (MENU-019 a MENU-036)
+  PLATOS FUERTES:    18 productos (MENU-037 a MENU-054)
+  PIZZAS:            18 productos (MENU-055 a MENU-072)
+  HAMBURGUESAS:      17 productos (MENU-073 a MENU-089)
+  PASTAS:            18 productos (MENU-090 a MENU-107)
+  BEBIDAS:           28 productos (MENU-108 a MENU-135)
+  POSTRES:           13 productos (MENU-136 a MENU-148)
+  PROMOCIONES:        5 productos (MENU-149 a MENU-153)
+  ────────────────────────────────────────────────────
+  TOTAL:            153 PRODUCTOS ✓
+
+  Archivo: /database/seed-data.sql (482 líneas)
+
+  MI ERROR: Conté mal los INSERTs. Hay 4 statements INSERT pero cada uno inserta MÚLTIPLES productos.
+
+  ---
+  🔴 HALLAZGO CRÍTICO #3: NO HAY IMPORTACIÓN CSV
+
+  LO QUE BUSQUÉ:
+
+  - ❌ Endpoint backend: POST /api/products/bulk → NO EXISTE
+  - ❌ Endpoint backend: POST /api/products/import → NO EXISTE
+  - ❌ Frontend admin: Botón "Importar CSV" → NO EXISTE
+  - ❌ Frontend admin: Input file upload → NO EXISTE
+  - ❌ Librería CSV parser (papaparse, csv-parse) → NO INSTALADA
+
+  LO QUE SÍ EXISTE (ENGAÑOSO):
+
+  // admin/src/app/products/page.tsx:110
+  const handleBulkAction = (action: string) => {
+    // Esta función SOLO maneja selección visual
+    // NO hace upload de CSV
+    // NO hace importación masiva
+  }
+
+  ESTO ES SOLO UI PARA:
+  - Seleccionar productos existentes con checkboxes
+  - Aplicar acción a seleccionados (delete, activate, deactivate)
+  - NO ES IMPORTACIÓN CSV
+
+  CONSECUENCIA:
+  - Admin debe crear los 153 productos UNO POR UNO manualmente
+  - Llenar 10 campos por producto × 153 = 1,530 campos
+  - Tiempo estimado: 6-8 horas de trabajo manual
+  - Alta probabilidad de errores de tipeo
+  - INACEPTABLE para producción 🔴🔴🔴
+
+  ---
+  📊 TABLA ACTUALIZADA DE COMPLETITUD
+
+  | Frontend | ANTES (incorrecto) | AHORA (real) | Cambio | Estado         |
+  |----------|--------------------|--------------|--------|----------------|
+  | Widget   | 80%                | 40%          | -40%   | 🔴 NO FUNCIONA |
+  | Cliente  | 75%                | 75%          | 0%     | ⚠️ Parcial     |
+  | Cocina   | 85%                | 85%          | 0%     | ✅ OK           |
+  | Mesero   | 70%                | 70%          | 0%     | ⚠️ Parcial     |
+  | Admin    | 60%                | 55%          | -5%    | 🔴 Mock data   |
+
+  ---
+  🔥 NUEVOS BLOQUEADORES ABSOLUTOS
+
+  BLOQUEADOR #12: WIDGET ROTO (CRÍTICO)
+
+  PROBLEMA:
+  El widget NO puede mostrar menú del backend porque:
+  1. State Machine asume que backend devuelve categorías/productos en response.data.options
+  2. PERO widget nunca llama a /api/menu/*
+  3. Backend State Machine (/backend/src/state-machine/all-levels.ts) SÍ consulta MenuService
+  4. Respuesta llega al widget
+  5. PERO no hay lógica para renderizar los productos
+
+  CÓDIGO FALTANTE EN WIDGET:
+  // widget/src/widget.js - FALTA:
+
+  renderProductOptions(products) {
+    // Crear botones/lista con productos
+    // Mostrar nombre, descripción, precio
+    // Permitir selección
+  }
+
+  renderCategories(categories) {
+    // Mostrar categorías disponibles
+    // Permitir navegación
+  }
+
+  TIEMPO PARA ARREGLAR: 2-3 días
+  LÍNEAS DE CÓDIGO: ~300 líneas
+
+  ---
+  BLOQUEADOR #13: SIN IMPORTACIÓN CSV (CRÍTICO)
+
+  IMPACTO:
+  - Restaurante tiene 153 productos
+  - Admin debe crearlos manualmente uno por uno
+  - 6-8 horas de trabajo tedioso
+  - Alta probabilidad de errores
+
+  SOLUCIÓN REQUERIDA:
+
+  BACKEND:
+  // routes/menu.routes.ts
+  router.post('/products/bulk',
+    authenticate,
+    isAdmin,
+    upload.single('file'), // multer
+    async (req, res) => {
+      const csvFile = req.file;
+      const parsed = await parseCSV(csvFile);
+      const results = await MenuService.bulkCreateProducts(parsed);
+      res.json({ success: true, data: results });
+    }
+  );
+
+  FRONTEND ADMIN:
+  // admin/src/app/products/page.tsx
+  <input
+    type="file"
+    accept=".csv"
+    onChange={handleCSVUpload}
+  />
+
+  const handleCSVUpload = async (e) => {
+    const file = e.target.files[0];
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await api.post('/products/bulk', formData);
+    toast.success(`${response.data.count} productos importados`);
+  };
+
+  DEPENDENCIAS FALTANTES:
+  {
+    "multer": "^1.4.5-lts.1",  // Backend
+    "papaparse": "^5.4.1"       // Frontend
+  }
+
+  TIEMPO PARA IMPLEMENTAR: 1-2 días
+  PRIORIDAD: ALTA (ahorra 6 horas de trabajo manual)
+
+  ---
+  📋 CHECKLIST ACTUALIZADO - LO QUE FALTA CRÍTICO
+
+  | #   | Problema                | Severidad | Bloqueador | Tiempo   | Nuevo |
+  |-----|-------------------------|-----------|------------|----------|-------|
+  | 1   | Widget NO muestra menús | 🔴🔴🔴    | SÍ         | 2-3 días | ✅     |
+  | 2   | Sin importación CSV     | 🔴🔴      | SÍ         | 1-2 días | ✅     |
+  | 3   | Admin con mock data     | 🔴🔴🔴    | SÍ         | 5-7 días | -     |
+  | 4   | Sin tests (0%)          | 🔴🔴🔴    | SÍ         | 3-4 sem  | -     |
+  | 5   | Secretos por defecto    | 🔴🔴🔴    | SÍ         | 30 min   | -     |
+  | 6   | Sin HTTPS               | 🔴🔴      | SÍ         | 4-8 h    | -     |
+  | 7   | Sin backup              | 🔴🔴      | SÍ         | 1 día    | -     |
+  | 8   | WebSocket parcial       | 🟠🟠      | NO         | 2 días   | -     |
+  | 9   | Mock credentials        | 🟠🟠      | NO         | 1 h      | -     |
+  | 10  | Sin docs API            | 🟠        | NO         | 1 sem    | -     |
+
+  TOTAL CRÍTICOS: 7 (antes: 5)
+
+  ---
+  🎯 VEREDICTO FINAL ACTUALIZADO
+
+  CALIFICACIÓN REVISADA:
+
+  ╔════════════════════════════════════════════════════╗
+  ║  FUNCIONALIDAD:     55%  (antes: 70%)             ║
+  ║  SEGURIDAD:         20%  (sin cambios)            ║
+  ║  CONFIABILIDAD:     30%  (sin cambios)            ║
+  ║  ADMINISTRACIÓN:    10%  (sin cambios)            ║
+  ║  USABILIDAD:        30%  (antes: 60%)             ║
+  ║  PRODUCCIÓN-READY:   0%  (sin cambios)            ║
+  ║  ────────────────────────────────────────────────  ║
+  ║  CALIFICACIÓN:     2.0/10  (antes: 2.5/10)        ║
+  ╚════════════════════════════════════════════════════╝
+
+  LO QUE REALMENTE FUNCIONA:
+
+  1. ✅ Backend State Machine - Lógica correcta, devuelve menús
+  2. ✅ Cocina PWA - Funciona perfecto
+  3. ✅ Base de datos - 153 productos listos
+  4. ⚠️ Cliente PWA - Funciona pero sin WebSocket
+  5. ⚠️ Mesero PWA - Funciona pero con mocks
+  6. ❌ Widget - ROTO (no muestra menús)
+  7. ❌ Admin - Mock data + sin CSV import
+  8. ❌ Tests - 0%
+  9. ❌ Seguridad - Comprometida
+
+  TIEMPO TOTAL PARA PRODUCCIÓN (ACTUALIZADO):
+
+  ╔═══════════════════════════════════════════════════╗
+  ║  SEMANA 1: Seguridad + Backup                    ║
+  ║    - Cambiar secretos (30 min)                   ║
+  ║    - HTTPS (8 h)                                  ║
+  ║    - Backup automático (1 día)                   ║
+  ║                                                   ║
+  ║  SEMANA 2: Widget + CSV                          ║
+  ║    - Arreglar widget menús (2-3 días)            ║
+  ║    - Implementar CSV import (1-2 días)           ║
+  ║                                                   ║
+  ║  SEMANA 3: Admin                                  ║
+  ║    - Conectar admin a API real (5-7 días)        ║
+  ║                                                   ║
+  ║  SEMANA 4: WebSocket + Polish                     ║
+  ║    - Conectar WebSocket cliente/mesero (2 días)  ║
+  ║    - Remover mocks (1 h)                         ║
+  ║    - Polish (resto)                              ║
+  ║                                                   ║
+  ║  SEMANAS 5-8: Tests                              ║
+  ║    - Tests críticos (60 tests mínimo)            ║
+  ║    - E2E testing                                 ║
+  ║    - Load testing                                ║
+  ║  ─────────────────────────────────────────────   ║
+  ║  MÍNIMO VIABLE (arriesgado):     4 semanas      ║
+  ║  SEGURO (recomendado):           8 semanas      ║
+  ║  ENTERPRISE (ideal):            12 semanas      ║
+  ╚═══════════════════════════════════════════════════╝
+
+  ---
+  💣 LA VERDAD BRUTAL FINAL
+
+  SI DEPLOYEAS HOY:
+
+  1. ✅ Cocina funciona
+  2. ⚠️ Mesero funciona a medias (mocks)
+  3. ⚠️ Cliente funciona a medias (sin real-time)
+  4. ❌ Widget NO FUNCIONA (canal principal de ventas)
+  5. ❌ Admin NO FUNCIONA (mock data)
+  6. ❌ Sistema es INSEGURO (JWT default)
+  7. ❌ No hay backup → pérdida de datos
+  8. ❌ Sin tests → bugs garantizados
+
+  PROBABILIDAD DE FRACASO: 98%
+
+  RECOMENDACIÓN FINAL:
+
+  NO HAGAS DEPLOY. ES SUICIDIO EMPRESARIAL.
+
+  Prioriza en este orden exacto:
+  1. Seguridad (Semana 1) - NO NEGOCIABLE
+  2. Widget funcional (Semana 2) - CRÍTICO para ventas
+  3. CSV import (Semana 2) - Ahorra tiempo operacional
+  4. Admin conectado (Semana 3) - Sistema administrable
+  5. Tests mínimos (Semanas 5-8) - Confiabilidad
+
+  DESPUÉS de esto, RECIÉN considera staging/producción.
+
+  ---
+
+● ---
+  ✅ AUDITORÍA COMPLETA FINALIZADA
+
+  He corregido mi evaluación inicial basándome en tus hallazgos correctos:
+
+  🔴 PROBLEMAS CRÍTICOS CONFIRMADOS:
+
+  1. Widget ROTO - NO muestra menús del backend, solo tiene chat-api básico
+  2. Seed data OK - SÍ hay 153 productos en /database/seed-data.sql
+  3. CSV import FALTA - NO hay funcionalidad de importación masiva
+
+  📊 CALIFICACIÓN FINAL: 2.0/10
+
+  Estado: NO DEPLOYABLE - Requiere mínimo 4 semanas de trabajo intensivo
