@@ -2,14 +2,11 @@
   "name": "restaurante-widget",
   "version": "1.0.0",
   "description": "Widget Embebible - Sistema ERP Restaurante",
-  "main": "dist/widget.js",
+  "main": "dist/widget.min.js",
   "scripts": {
-    "dev": "webpack serve --mode development",
+    "dev": "webpack serve --mode development --port 8080",
     "build": "webpack --mode production",
     "watch": "webpack --mode development --watch"
-  },
-  "dependencies": {
-    "axios": "^1.4.0"
   },
   "devDependencies": {
     "webpack": "^5.88.0",
@@ -17,6 +14,8 @@
     "webpack-dev-server": "^4.15.1",
     "@babel/core": "^7.22.5",
     "@babel/preset-env": "^7.22.5",
-    "babel-loader": "^9.1.2"
+    "babel-loader": "^9.1.2",
+    "css-loader": "^6.8.1",
+    "style-loader": "^3.3.3"
   }
 }
