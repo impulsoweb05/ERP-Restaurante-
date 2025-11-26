@@ -61,7 +61,7 @@ export class ReservationService {
 
       const validationResult = ValidationService.validateAll(validations);
       if (!validationResult.isValid) {
-        throw new Error(`Errores de validación: ${validationResult.errors.join(', ')}');
+        throw new Error(`Errores de validación: ${validationResult.errors.join(', ')}`);
       }
 
       // 2. Verificar que el cliente existe
@@ -133,7 +133,7 @@ export class ReservationService {
 
       await client.query('COMMIT');
 
-      logger.info('Reserva creada: ${reservationNumber}');
+      logger.info(`Reserva creada: ${reservationNumber}`);
       return {
         success: true,
         reservation: result.rows[0],
@@ -363,7 +363,7 @@ export class ReservationService {
 
       await client.query('COMMIT');
 
-      logger.info('Reserva confirmada: ${result.rows[0].reservation_number}');
+      logger.info(`Reserva confirmada: ${result.rows[0].reservation_number}`);
       return {
         success: true,
         reservation: result.rows[0],
@@ -417,7 +417,7 @@ export class ReservationService {
 
       await client.query('COMMIT');
 
-      logger.info('Reserva activada: ${reservationId}');
+      logger.info(`Reserva activada: ${reservationId}`);
       return {
         success: true,
         message: 'Reserva activada - Cliente sentado'
@@ -487,7 +487,7 @@ export class ReservationService {
 
       await client.query('COMMIT');
 
-      logger.info('Reserva cancelada: ${result.rows[0].reservation_number}');
+      logger.info(`Reserva cancelada: ${result.rows[0].reservation_number}`);
       return {
         success: true,
         reservation: result.rows[0],
@@ -541,7 +541,7 @@ export class ReservationService {
 
       await client.query('COMMIT');
 
-      logger.info('Reserva marcada como no-show: ${reservationId}');
+      logger.info(`Reserva marcada como no-show: ${reservationId}`);
       return {
         success: true,
         message: 'Reserva marcada como no-show'
@@ -595,7 +595,7 @@ export class ReservationService {
 
       await client.query('COMMIT');
 
-      logger.info('Reserva completada: ${reservationId}');
+      logger.info(`Reserva completada: ${reservationId}`);
       return {
         success: true,
         message: 'Reserva completada exitosamente'
@@ -702,29 +702,29 @@ export class ReservationService {
       let paramCount = 1;
 
       if (data.reservation_date) {
-        updates.push(`reservation_date = $${paramCount++}');
+        updates.push(`reservation_date = $${paramCount++}`);
         values.push(data.reservation_date);
       }
 
       if (data.reservation_time) {
-        updates.push(`reservation_time = $${paramCount++}');
+        updates.push(`reservation_time = $${paramCount++}`);
         values.push(data.reservation_time);
       }
 
       if (data.party_size) {
         ValidationService.validatePartySize(data.party_size);
-        updates.push(`party_size = $${paramCount++}');
+        updates.push(`party_size = $${paramCount++}`);
         values.push(data.party_size);
       }
 
       if (data.table_id) {
         ValidationService.validateUUID(data.table_id);
-        updates.push(`table_id = $${paramCount++}');
+        updates.push(`table_id = $${paramCount++}`);
         values.push(data.table_id);
       }
 
       if (data.special_requests !== undefined) {
-        updates.push(`special_requests = $${paramCount++}');
+        updates.push(`special_requests = $${paramCount++}`);
         values.push(data.special_requests);
       }
 
@@ -732,7 +732,7 @@ export class ReservationService {
         throw new Error('No hay campos para actualizar');
       }
 
-      updates.push(`updated_at = CURRENT_TIMESTAMP');
+      updates.push(`updated_at = CURRENT_TIMESTAMP`);
       values.push(reservationId);
 
       const query = `
@@ -751,7 +751,7 @@ export class ReservationService {
 
       await client.query('COMMIT');
 
-      logger.info('Reserva actualizada: ${result.rows[0].reservation_number}');
+      logger.info(`Reserva actualizada: ${result.rows[0].reservation_number}`);
       return {
         success: true,
         reservation: result.rows[0],

@@ -65,7 +65,7 @@ export class KitchenService {
         data.estimated_time || item.preparation_time || null
       ]);
 
-      logger.info('Item agregado a cola de cocina (prioridad: ${priority})');
+      logger.info(`Item agregado a cola de cocina (prioridad: ${priority})`);
       return {
         success: true,
         queueItem: result.rows[0],
@@ -105,7 +105,7 @@ export class KitchenService {
       if (statusFilter) {
         const validStatuses = ['queued', 'preparing', 'ready'];
         if (!validStatuses.includes(statusFilter)) {
-          throw new Error(`Estado inválido. Debe ser: ${validStatuses.join(', ')}');
+          throw new Error(`Estado inválido. Debe ser: ${validStatuses.join(', ')}`);
         }
         query += ' WHERE kq.status = $1';
         params.push(statusFilter);
@@ -203,7 +203,7 @@ export class KitchenService {
 
       await client.query('COMMIT');
 
-      logger.info('Preparación iniciada para item: ${queueId}');
+      logger.info(`Preparación iniciada para item: ${queueId}`);
       return {
         success: true,
         message: 'Preparación iniciada'
@@ -265,7 +265,7 @@ export class KitchenService {
 
       await client.query('COMMIT');
 
-      logger.info('Item completado: ${queueId}');
+      logger.info(`Item completado: ${queueId}`);
 
       // Notificar via WebSocket que el item está listo
       if (orderInfo.rows.length > 0) {
@@ -317,7 +317,7 @@ export class KitchenService {
         throw new Error('Item no encontrado o ya completado');
       }
 
-      logger.info('Prioridad actualizada: ${priority}');
+      logger.info(`Prioridad actualizada: ${priority}`);
       return {
         success: true,
         queueItem: result.rows[0],
@@ -350,7 +350,7 @@ export class KitchenService {
         throw new Error('Item no encontrado o ya completado');
       }
 
-      logger.info('Estación actualizada: ${station}');
+      logger.info(`Estación actualizada: ${station}`);
       return {
         success: true,
         queueItem: result.rows[0],
@@ -586,7 +586,7 @@ export class KitchenService {
         throw new Error('Item no encontrado en la cola');
       }
 
-      logger.info('Item eliminado de la cola: ${queueId}');
+      logger.info(`Item eliminado de la cola: ${queueId}`);
       return {
         success: true,
         message: 'Item eliminado de la cola'
