@@ -93,17 +93,17 @@ export const useSettingsStore = create<SettingsState>()(
           email: {
             host: 'smtp.gmail.com',
             port: 587,
-            user: 'impulsodigitalw25@gmail.com',
-            password: 'uzzk mjjd ydnb aqec',
+            user: '', // Configure in Settings > Integrations
+            password: '', // Configure in Settings > Integrations
           },
           whatsapp: {
-            url: 'http://192.168.0.6:8102',
-            instance: 'BOTRESTAURANTE',
-            api_key: 'Iwb0221125',
+            url: '', // Configure in Settings > Integrations
+            instance: '', // Configure in Settings > Integrations
+            api_key: '', // Configure in Settings > Integrations
           },
           telegram: {
-            bot_token: '8468556108:AAEHSndqXI4hYZbxsQWuIurbOgmuR2yidfo',
-            chat_id: '8214284181',
+            bot_token: '', // Configure in Settings > Integrations
+            chat_id: '', // Configure in Settings > Integrations
           },
         },
         reservation_config: {

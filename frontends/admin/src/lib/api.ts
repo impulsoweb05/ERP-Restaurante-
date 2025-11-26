@@ -116,7 +116,7 @@ export const changeWaiterPin = (id: string, pin: string) => api.patch(`/admin/wa
 
 // Kitchen
 export const fetchKitchenQueue = (station?: string) => 
-  api.get('/api/kitchen/queue', { params: { station } });
+  api.get('/admin/kitchen/queue', { params: { station } });
 
 // Schedules
 export const fetchSchedules = () => api.get('/admin/schedules');

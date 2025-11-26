@@ -58,14 +58,22 @@ export default function SettingsPage() {
 
   const generateVapidKeys = () => {
     toast.loading('Generando claves VAPID...');
+    // TODO: This should call the backend API to generate real VAPID keys
+    // For demo purposes, generating placeholder keys
+    // In production, use: const webpush = require('web-push'); webpush.generateVAPIDKeys();
     setTimeout(() => {
       toast.dismiss();
-      const publicKey = 'BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U';
-      const privateKey = 'UUxI4O8-FbRouAf7-7xF6-4_0u0LvGk-8LhMmP1vZ5g';
+      // Generate random-looking demo keys (not real cryptographic keys)
+      const generateRandomKey = (length: number) => {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+        return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+      };
+      const publicKey = generateRandomKey(87);
+      const privateKey = generateRandomKey(43);
       updateForm({
         vapid_keys: { public_key: publicKey, private_key: privateKey }
       });
-      toast.success('Claves VAPID generadas');
+      toast.success('Claves VAPID generadas (demo)');
     }, 1000);
   };
 

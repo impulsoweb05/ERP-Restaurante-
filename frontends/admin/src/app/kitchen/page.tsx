@@ -128,10 +128,16 @@ export default function KitchenPage() {
       i.id === item.id ? { ...i, status: 'ready', completed_at: new Date().toISOString() } : i
     ));
     toast.success(`¡Listo! ${item.item_name}`);
-    // Play sound
+    // Play notification sound
     if (soundEnabled) {
-      const audio = new Audio('/sounds/notification.mp3');
-      audio.play().catch(() => {});
+      try {
+        const audio = new Audio('/sounds/notification.mp3');
+        audio.play().catch((err) => {
+          console.warn('Could not play notification sound:', err.message);
+        });
+      } catch (err) {
+        console.warn('Audio not supported');
+      }
     }
   };
 
