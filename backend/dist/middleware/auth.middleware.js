@@ -5,6 +5,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.optionalAuth = exports.isOwnerOrAdmin = exports.isWaiterOrAdmin = exports.isCustomer = exports.isWaiter = exports.isAdmin = exports.authenticate = void 0;
 const AuthService_1 = require("@services/AuthService");
+const logger_1 = require("../utils/logger");
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // MIDDLEWARE: Verificar autenticación (JWT)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -40,7 +41,7 @@ const authenticate = async (req, res, next) => {
         next();
     }
     catch (error) {
-        console.error('❌ Error en middleware de autenticación:', error.message);
+        logger_1.logger.error('Error en middleware de autenticación', error);
         return res.status(401).json({
             success: false,
             error: 'Error de autenticación'

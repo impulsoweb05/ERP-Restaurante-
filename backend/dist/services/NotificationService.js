@@ -11,6 +11,7 @@ const database_1 = require("@config/database");
 const ValidationService_1 = require("./ValidationService");
 const nodemailer_1 = __importDefault(require("nodemailer"));
 const axios_1 = __importDefault(require("axios"));
+const logger_1 = require("../utils/logger");
 const pool = (0, database_1.getPool)();
 class NotificationService {
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -39,7 +40,7 @@ class NotificationService {
             return result.rows[0];
         }
         catch (error) {
-            console.error('❌ Error al crear registro de notificación:', error.message);
+            logger_1.logger.error('Error al crear registro de notificación', error);
             throw error;
         }
     }
@@ -54,7 +55,7 @@ class NotificationService {
          WHERE id = $1`, [notificationId]);
         }
         catch (error) {
-            console.error('❌ Error al marcar como enviada:', error.message);
+            logger_1.logger.error('Error al marcar como enviada', error);
         }
     }
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -68,7 +69,7 @@ class NotificationService {
          WHERE id = $2`, [errorMessage, notificationId]);
         }
         catch (error) {
-            console.error('❌ Error al marcar como fallida:', error.message);
+            logger_1.logger.error('Error al marcar como fallida', error);
         }
     }
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -113,7 +114,7 @@ class NotificationService {
             await transporter.sendMail(mailOptions);
             // 6. Marcar como enviado
             await this.markAsSent(notificationRecord.id);
-            console.log(`✅ Email enviado a ${data.recipient}`);
+            logger_1.logger.info('Email enviado a ${data.recipient}`););
             return {
                 success: true,
                 notificationId: notificationRecord.id,
@@ -121,7 +122,7 @@ class NotificationService {
             };
         }
         catch (error) {
-            console.error('❌ Error al enviar email:', error.message);
+            logger_1.logger.error('Error al enviar email', error);
             if (notificationRecord) {
                 await this.markAsFailed(notificationRecord.id, error.message);
             }
@@ -165,7 +166,7 @@ class NotificationService {
             if (response.data && response.data.key) {
                 // 6. Marcar como enviado
                 await this.markAsSent(notificationRecord.id);
-                console.log(`✅ WhatsApp enviado a ${data.recipient}`);
+                logger_1.logger.info('WhatsApp enviado a ${data.recipient}`););
                 return {
                     success: true,
                     notificationId: notificationRecord.id,
@@ -178,7 +179,7 @@ class NotificationService {
             }
         }
         catch (error) {
-            console.error('❌ Error al enviar WhatsApp:', error.message);
+            logger_1.logger.error('Error al enviar WhatsApp', error);
             if (notificationRecord) {
                 await this.markAsFailed(notificationRecord.id, error.message);
             }
@@ -213,7 +214,7 @@ class NotificationService {
             if (response.data && response.data.ok) {
                 // 5. Marcar como enviado
                 await this.markAsSent(notificationRecord.id);
-                console.log(`✅ Telegram enviado a chat ${data.recipient}`);
+                logger_1.logger.info('Telegram enviado a chat ${data.recipient}`););
                 return {
                     success: true,
                     notificationId: notificationRecord.id,
@@ -226,7 +227,7 @@ class NotificationService {
             }
         }
         catch (error) {
-            console.error('❌ Error al enviar Telegram:', error.message);
+            logger_1.logger.error('Error al enviar Telegram', error);
             if (notificationRecord) {
                 await this.markAsFailed(notificationRecord.id, error.message);
             }
@@ -250,7 +251,7 @@ class NotificationService {
             }
         }
         catch (error) {
-            console.error('❌ Error al enviar notificación:', error.message);
+            logger_1.logger.error('Error al enviar notificación', error);
             throw error;
         }
     }
@@ -274,7 +275,7 @@ class NotificationService {
             };
         }
         catch (error) {
-            console.error('❌ Error al obtener notificaciones del pedido:', error.message);
+            logger_1.logger.error('Error al obtener notificaciones del pedido', error);
             throw error;
         }
     }
@@ -298,7 +299,7 @@ class NotificationService {
             };
         }
         catch (error) {
-            console.error('❌ Error al obtener notificaciones de la reserva:', error.message);
+            logger_1.logger.error('Error al obtener notificaciones de la reserva', error);
             throw error;
         }
     }
@@ -322,7 +323,7 @@ class NotificationService {
             };
         }
         catch (error) {
-            console.error('❌ Error al obtener notificaciones fallidas:', error.message);
+            logger_1.logger.error('Error al obtener notificaciones fallidas', error);
             throw error;
         }
     }
@@ -358,7 +359,7 @@ class NotificationService {
             return await this.sendNotification(data);
         }
         catch (error) {
-            console.error('❌ Error al reenviar notificación:', error.message);
+            logger_1.logger.error('Error al reenviar notificación', error);
             throw error;
         }
     }
@@ -398,7 +399,7 @@ class NotificationService {
             };
         }
         catch (error) {
-            console.error('❌ Error al obtener estadísticas:', error.message);
+            logger_1.logger.error('Error al obtener estadísticas', error);
             throw error;
         }
     }
@@ -420,7 +421,7 @@ class NotificationService {
             return await this.sendNotification(data);
         }
         catch (error) {
-            console.error('❌ Error en notificación de pedido:', error.message);
+            logger_1.logger.error('Error en notificación de pedido', error);
             // No lanzar error para no bloquear la creación del pedido
             return { success: false, error: error.message };
         }
@@ -443,7 +444,7 @@ class NotificationService {
             return await this.sendNotification(data);
         }
         catch (error) {
-            console.error('❌ Error en notificación de reserva:', error.message);
+            logger_1.logger.error('Error en notificación de reserva', error);
             return { success: false, error: error.message };
         }
     }

@@ -7,6 +7,7 @@ exports.WaiterService = void 0;
 const database_1 = require("@config/database");
 const ValidationService_1 = require("./ValidationService");
 const AuthService_1 = require("./AuthService");
+const logger_1 = require("../utils/logger");
 const pool = (0, database_1.getPool)();
 class WaiterService {
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -45,7 +46,7 @@ class WaiterService {
                 data.phone || null,
                 hashedPin
             ]);
-            console.log(`✅ Mesero creado: ${data.waiter_code} - ${data.full_name}`);
+            logger_1.logger.info('Mesero creado', { waiter_code: data.waiter_code, full_name: data.full_name });
             return {
                 success: true,
                 waiter: result.rows[0],
@@ -53,7 +54,7 @@ class WaiterService {
             };
         }
         catch (error) {
-            console.error('❌ Error al crear mesero:', error.message);
+            logger_1.logger.error('Error al crear mesero', error);
             throw error;
         }
     }
@@ -79,7 +80,7 @@ class WaiterService {
             };
         }
         catch (error) {
-            console.error('❌ Error al obtener meseros:', error.message);
+            logger_1.logger.error('Error al obtener meseros', error);
             throw error;
         }
     }
@@ -105,7 +106,7 @@ class WaiterService {
             };
         }
         catch (error) {
-            console.error('❌ Error al obtener mesero:', error.message);
+            logger_1.logger.error('Error al obtener mesero', error);
             throw error;
         }
     }
@@ -130,7 +131,7 @@ class WaiterService {
             };
         }
         catch (error) {
-            console.error('❌ Error al obtener mesero por código:', error.message);
+            logger_1.logger.error('Error al obtener mesero por código', error);
             throw error;
         }
     }
@@ -154,7 +155,7 @@ class WaiterService {
             };
         }
         catch (error) {
-            console.error('❌ Error al obtener meseros activos:', error.message);
+            logger_1.logger.error('Error al obtener meseros activos', error);
             throw error;
         }
     }
@@ -198,7 +199,7 @@ class WaiterService {
             if (result.rows.length === 0) {
                 throw new Error('Mesero no encontrado');
             }
-            console.log(`✅ Mesero ${result.rows[0].waiter_code} actualizado`);
+            logger_1.logger.info('Mesero actualizado', { waiter_code: result.rows[0].waiter_code });
             return {
                 success: true,
                 waiter: result.rows[0],
@@ -206,7 +207,7 @@ class WaiterService {
             };
         }
         catch (error) {
-            console.error('❌ Error al actualizar mesero:', error.message);
+            logger_1.logger.error('Error al actualizar mesero', error);
             throw error;
         }
     }
@@ -228,7 +229,7 @@ class WaiterService {
                 throw new Error('Mesero no encontrado');
             }
             const status = isActive ? 'activado' : 'desactivado';
-            console.log(`✅ Mesero ${result.rows[0].waiter_code} ${status}`);
+            logger_1.logger.info('Estado de mesero cambiado', { waiter_code: result.rows[0].waiter_code, status });
             return {
                 success: true,
                 waiter: result.rows[0],
@@ -236,7 +237,7 @@ class WaiterService {
             };
         }
         catch (error) {
-            console.error('❌ Error al cambiar estado del mesero:', error.message);
+            logger_1.logger.error('Error al cambiar estado del mesero', error);
             throw error;
         }
     }
@@ -264,14 +265,14 @@ class WaiterService {
             if (result.rows.length === 0) {
                 throw new Error('Mesero no encontrado');
             }
-            console.log(`✅ PIN actualizado para mesero ${result.rows[0].waiter_code}`);
+            logger_1.logger.info('PIN de mesero actualizado', { waiter_code: result.rows[0].waiter_code });
             return {
                 success: true,
                 message: 'PIN actualizado exitosamente'
             };
         }
         catch (error) {
-            console.error('❌ Error al cambiar PIN:', error.message);
+            logger_1.logger.error('Error al cambiar PIN', error);
             throw error;
         }
     }
@@ -292,14 +293,14 @@ class WaiterService {
             if (result.rows.length === 0) {
                 throw new Error('Mesero no encontrado');
             }
-            console.log(`✅ Pedido asignado a ${result.rows[0].waiter_code} (total: ${result.rows[0].current_orders})`);
+            logger_1.logger.info('Pedido asignado a mesero', { waiter_code: result.rows[0].waiter_code, current_orders: result.rows[0].current_orders });
             return {
                 success: true,
                 waiter: result.rows[0]
             };
         }
         catch (error) {
-            console.error('❌ Error al incrementar contador:', error.message);
+            logger_1.logger.error('Error al incrementar contador', error);
             throw error;
         }
     }
@@ -320,14 +321,14 @@ class WaiterService {
             if (result.rows.length === 0) {
                 throw new Error('Mesero no encontrado');
             }
-            console.log(`✅ Pedido completado por ${result.rows[0].waiter_code} (restantes: ${result.rows[0].current_orders})`);
+            logger_1.logger.info('Pedido completado por mesero', { waiter_code: result.rows[0].waiter_code, current_orders: result.rows[0].current_orders });
             return {
                 success: true,
                 waiter: result.rows[0]
             };
         }
         catch (error) {
-            console.error('❌ Error al decrementar contador:', error.message);
+            logger_1.logger.error('Error al decrementar contador', error);
             throw error;
         }
     }
@@ -356,7 +357,7 @@ class WaiterService {
             };
         }
         catch (error) {
-            console.error('❌ Error al obtener mesero con menos pedidos:', error.message);
+            logger_1.logger.error('Error al obtener mesero con menos pedidos', error);
             throw error;
         }
     }
@@ -405,7 +406,7 @@ class WaiterService {
             };
         }
         catch (error) {
-            console.error('❌ Error al obtener estadísticas del mesero:', error.message);
+            logger_1.logger.error('Error al obtener estadísticas del mesero', error);
             throw error;
         }
     }
@@ -440,7 +441,7 @@ class WaiterService {
             };
         }
         catch (error) {
-            console.error('❌ Error al obtener pedidos del mesero:', error.message);
+            logger_1.logger.error('Error al obtener pedidos del mesero', error);
             throw error;
         }
     }
@@ -463,14 +464,14 @@ class WaiterService {
                 throw new Error('Mesero no encontrado');
             }
             const waiter = deleteQuery.rows[0];
-            console.log(`✅ Mesero ${waiter.waiter_code} - ${waiter.full_name} eliminado`);
+            logger_1.logger.info('Mesero eliminado', { waiter_code: waiter.waiter_code, full_name: waiter.full_name });
             return {
                 success: true,
                 message: `Mesero ${waiter.waiter_code} eliminado exitosamente`
             };
         }
         catch (error) {
-            console.error('❌ Error al eliminar mesero:', error.message);
+            logger_1.logger.error('Error al eliminar mesero', error);
             throw error;
         }
     }

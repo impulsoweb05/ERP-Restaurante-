@@ -7,6 +7,7 @@ const express_1 = require("express");
 const ReservationService_1 = require("@services/ReservationService");
 const NotificationService_1 = require("@services/NotificationService");
 const auth_middleware_1 = require("@middleware/auth.middleware");
+const logger_1 = require("../utils/logger");
 const router = (0, express_1.Router)();
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // POST /reservations - Crear Reserva
@@ -34,11 +35,11 @@ router.post('/', auth_middleware_1.authenticate, async (req, res) => {
             special_requests
         });
         // Enviar notificación (no bloqueante)
-        NotificationService_1.NotificationService.sendReservationConfirmedNotification(result.reservation.id, customer_phone, result.reservation.reservation_number, reservation_date, reservation_time).catch(err => console.error('Error al enviar notificación:', err));
+        NotificationService_1.NotificationService.sendReservationConfirmedNotification(result.reservation.id, customer_phone, result.reservation.reservation_number, reservation_date, reservation_time).catch(err => logger_1.logger.error('Error al enviar notificación', err));
         res.status(201).json(result);
     }
     catch (error) {
-        console.error('❌ Error al crear reserva:', error.message);
+        logger_1.logger.error('Error al crear reserva', error);
         res.status(500).json({
             success: false,
             error: error.message
@@ -58,7 +59,7 @@ router.get('/:id', auth_middleware_1.authenticate, async (req, res) => {
         res.json(result);
     }
     catch (error) {
-        console.error('❌ Error al obtener reserva:', error.message);
+        logger_1.logger.error('Error al obtener reserva', error);
         res.status(500).json({
             success: false,
             error: error.message
@@ -82,7 +83,7 @@ router.get('/customer/:customerId', auth_middleware_1.authenticate, async (req, 
         res.json(result);
     }
     catch (error) {
-        console.error('❌ Error al obtener reservas del cliente:', error.message);
+        logger_1.logger.error('Error al obtener reservas del cliente', error);
         res.status(500).json({
             success: false,
             error: error.message
@@ -100,7 +101,7 @@ router.get('/date/:date', auth_middleware_1.authenticate, auth_middleware_1.isWa
         res.json(result);
     }
     catch (error) {
-        console.error('❌ Error al obtener reservas por fecha:', error.message);
+        logger_1.logger.error('Error al obtener reservas por fecha', error);
         res.status(500).json({
             success: false,
             error: error.message
@@ -124,7 +125,7 @@ router.put('/:id', auth_middleware_1.authenticate, async (req, res) => {
         res.json(result);
     }
     catch (error) {
-        console.error('❌ Error al actualizar reserva:', error.message);
+        logger_1.logger.error('Error al actualizar reserva', error);
         res.status(500).json({
             success: false,
             error: error.message
@@ -141,7 +142,7 @@ router.put('/:id/confirm', auth_middleware_1.authenticate, auth_middleware_1.isW
         res.json(result);
     }
     catch (error) {
-        console.error('❌ Error al confirmar reserva:', error.message);
+        logger_1.logger.error('Error al confirmar reserva', error);
         res.status(500).json({
             success: false,
             error: error.message
@@ -158,7 +159,7 @@ router.put('/:id/activate', auth_middleware_1.authenticate, auth_middleware_1.is
         res.json(result);
     }
     catch (error) {
-        console.error('❌ Error al activar reserva:', error.message);
+        logger_1.logger.error('Error al activar reserva', error);
         res.status(500).json({
             success: false,
             error: error.message
@@ -175,7 +176,7 @@ router.put('/:id/complete', auth_middleware_1.authenticate, auth_middleware_1.is
         res.json(result);
     }
     catch (error) {
-        console.error('❌ Error al completar reserva:', error.message);
+        logger_1.logger.error('Error al completar reserva', error);
         res.status(500).json({
             success: false,
             error: error.message
@@ -193,7 +194,7 @@ router.put('/:id/cancel', auth_middleware_1.authenticate, async (req, res) => {
         res.json(result);
     }
     catch (error) {
-        console.error('❌ Error al cancelar reserva:', error.message);
+        logger_1.logger.error('Error al cancelar reserva', error);
         res.status(500).json({
             success: false,
             error: error.message
@@ -210,7 +211,7 @@ router.put('/:id/no-show', auth_middleware_1.authenticate, auth_middleware_1.isW
         res.json(result);
     }
     catch (error) {
-        console.error('❌ Error al marcar no-show:', error.message);
+        logger_1.logger.error('Error al marcar no-show', error);
         res.status(500).json({
             success: false,
             error: error.message

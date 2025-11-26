@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const OrderService_1 = require("@services/OrderService");
 const auth_middleware_1 = require("@middleware/auth.middleware");
+const logger_1 = require("../utils/logger");
 const router = (0, express_1.Router)();
 // POST /orders - Crear Pedido
 router.post('/', auth_middleware_1.authenticate, async (req, res) => {
@@ -14,7 +15,7 @@ router.post('/', auth_middleware_1.authenticate, async (req, res) => {
         res.status(201).json({ success: true, ...result });
     }
     catch (error) {
-        console.error('❌ Error al crear pedido:', error.message);
+        logger_1.logger.error('Error al crear pedido', error);
         res.status(500).json({ success: false, error: error.message });
     }
 });

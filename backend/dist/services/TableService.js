@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.TableService = void 0;
 const database_1 = require("@config/database");
 const ValidationService_1 = require("./ValidationService");
+const logger_1 = require("../utils/logger");
 const pool = (0, database_1.getPool)();
 class TableService {
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -36,7 +37,7 @@ class TableService {
                 data.capacity,
                 data.zone || null
             ]);
-            console.log(`✅ Mesa creada: ${data.table_number} (capacidad: ${data.capacity})`);
+            logger_1.logger.info('Mesa creada', { table_number: data.table_number, capacity: data.capacity });
             return {
                 success: true,
                 table: result.rows[0],
@@ -44,7 +45,7 @@ class TableService {
             };
         }
         catch (error) {
-            console.error('❌ Error al crear mesa:', error.message);
+            logger_1.logger.error('Error al crear mesa', error);
             throw error;
         }
     }
@@ -71,7 +72,7 @@ class TableService {
             };
         }
         catch (error) {
-            console.error('❌ Error al obtener mesas:', error.message);
+            logger_1.logger.error('Error al obtener mesas', error);
             throw error;
         }
     }
@@ -104,7 +105,7 @@ class TableService {
             };
         }
         catch (error) {
-            console.error('❌ Error al obtener mesa:', error.message);
+            logger_1.logger.error('Error al obtener mesa', error);
             throw error;
         }
     }
@@ -134,7 +135,7 @@ class TableService {
             };
         }
         catch (error) {
-            console.error('❌ Error al obtener mesa por número:', error.message);
+            logger_1.logger.error('Error al obtener mesa por número', error);
             throw error;
         }
     }
@@ -167,7 +168,7 @@ class TableService {
             };
         }
         catch (error) {
-            console.error('❌ Error al obtener mesas por estado:', error.message);
+            logger_1.logger.error('Error al obtener mesas por estado', error);
             throw error;
         }
     }
@@ -196,7 +197,7 @@ class TableService {
             };
         }
         catch (error) {
-            console.error('❌ Error al obtener mesas por zona:', error.message);
+            logger_1.logger.error('Error al obtener mesas por zona', error);
             throw error;
         }
     }
@@ -225,7 +226,7 @@ class TableService {
             };
         }
         catch (error) {
-            console.error('❌ Error al obtener mesas disponibles:', error.message);
+            logger_1.logger.error('Error al obtener mesas disponibles', error);
             throw error;
         }
     }
@@ -250,7 +251,7 @@ class TableService {
             if (result.rows.length === 0) {
                 throw new Error('Mesa no encontrada');
             }
-            console.log(`✅ Mesa ${result.rows[0].table_number} → ${status}`);
+            logger_1.logger.info('Estado de mesa actualizado', { table_number: result.rows[0].table_number, status });
             return {
                 success: true,
                 table: result.rows[0],
@@ -258,7 +259,7 @@ class TableService {
             };
         }
         catch (error) {
-            console.error('❌ Error al actualizar estado de mesa:', error.message);
+            logger_1.logger.error('Error al actualizar estado de mesa', error);
             throw error;
         }
     }
@@ -281,7 +282,7 @@ class TableService {
             if (result.rows.length === 0) {
                 throw new Error('Mesa no encontrada');
             }
-            console.log(`✅ Pedido asignado a mesa ${result.rows[0].table_number}`);
+            logger_1.logger.info('Pedido asignado a mesa', { table_number: result.rows[0].table_number, orderId });
             return {
                 success: true,
                 table: result.rows[0],
@@ -289,7 +290,7 @@ class TableService {
             };
         }
         catch (error) {
-            console.error('❌ Error al asignar pedido:', error.message);
+            logger_1.logger.error('Error al asignar pedido', error);
             throw error;
         }
     }
@@ -312,7 +313,7 @@ class TableService {
             if (result.rows.length === 0) {
                 throw new Error('Mesa no encontrada');
             }
-            console.log(`✅ Reserva asignada a mesa ${result.rows[0].table_number}`);
+            logger_1.logger.info('Reserva asignada a mesa', { table_number: result.rows[0].table_number, reservationId });
             return {
                 success: true,
                 table: result.rows[0],
@@ -320,7 +321,7 @@ class TableService {
             };
         }
         catch (error) {
-            console.error('❌ Error al asignar reserva:', error.message);
+            logger_1.logger.error('Error al asignar reserva', error);
             throw error;
         }
     }
@@ -344,7 +345,7 @@ class TableService {
             if (result.rows.length === 0) {
                 throw new Error('Mesa no encontrada');
             }
-            console.log(`✅ Mesa ${result.rows[0].table_number} liberada → ${newStatus}`);
+            logger_1.logger.info('Mesa liberada', { table_number: result.rows[0].table_number, status: newStatus });
             return {
                 success: true,
                 table: result.rows[0],
@@ -352,7 +353,7 @@ class TableService {
             };
         }
         catch (error) {
-            console.error('❌ Error al liberar mesa:', error.message);
+            logger_1.logger.error('Error al liberar mesa', error);
             throw error;
         }
     }
@@ -403,7 +404,7 @@ class TableService {
             if (result.rows.length === 0) {
                 throw new Error('Mesa no encontrada');
             }
-            console.log(`✅ Mesa ${result.rows[0].table_number} actualizada`);
+            logger_1.logger.info('Mesa actualizada', { table_number: result.rows[0].table_number });
             return {
                 success: true,
                 table: result.rows[0],
@@ -411,7 +412,7 @@ class TableService {
             };
         }
         catch (error) {
-            console.error('❌ Error al actualizar mesa:', error.message);
+            logger_1.logger.error('Error al actualizar mesa', error);
             throw error;
         }
     }
@@ -433,14 +434,14 @@ class TableService {
                 throw new Error('No se puede eliminar mesa con pedidos/reservas activas');
             }
             const deleteQuery = await pool.query('DELETE FROM tables WHERE id = $1 RETURNING table_number', [tableId]);
-            console.log(`✅ Mesa ${table.table_number} eliminada`);
+            logger_1.logger.info('Mesa eliminada', { table_number: table.table_number });
             return {
                 success: true,
                 message: `Mesa ${table.table_number} eliminada exitosamente`
             };
         }
         catch (error) {
-            console.error('❌ Error al eliminar mesa:', error.message);
+            logger_1.logger.error('Error al eliminar mesa', error);
             throw error;
         }
     }
@@ -476,7 +477,7 @@ class TableService {
             };
         }
         catch (error) {
-            console.error('❌ Error al obtener estadísticas:', error.message);
+            logger_1.logger.error('Error al obtener estadísticas', error);
             throw error;
         }
     }

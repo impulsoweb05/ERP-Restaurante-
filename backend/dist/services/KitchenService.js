@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.KitchenService = void 0;
 const database_1 = require("@config/database");
 const ValidationService_1 = require("./ValidationService");
-const WebSocketService_1 = require("./WebSocketService");
+const logger_1 = require("../utils/logger");
 const pool = (0, database_1.getPool)();
 class KitchenService {
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -46,7 +46,7 @@ class KitchenService {
                 data.assigned_station || item.station || null,
                 data.estimated_time || item.preparation_time || null
             ]);
-            console.log(`✅ Item agregado a cola de cocina (prioridad: ${priority})`);
+            logger_1.logger.info('Item agregado a cola de cocina (prioridad: ${priority})');
             return {
                 success: true,
                 queueItem: result.rows[0],
@@ -54,7 +54,7 @@ class KitchenService {
             };
         }
         catch (error) {
-            console.error('❌ Error al agregar a cola:', error.message);
+            logger_1.logger.error('Error al agregar a cola', error);
             throw error;
         }
     }
@@ -83,419 +83,403 @@ class KitchenService {
             if (statusFilter) {
                 const validStatuses = ['queued', 'preparing', 'ready'];
                 if (!validStatuses.includes(statusFilter)) {
-                    throw new Error(`Estado inválido. Debe ser: ${validStatuses.join(', ')}`);
+                    throw new Error(`Estado inválido. Debe ser: ${validStatuses.join(', ')}');
+        }
+        query += ' WHERE kq.status = $1';
+        params.push(statusFilter);
+      }
+
+      // Ordenar por prioridad (1 = más urgente) y fecha de creación
+      query += ' ORDER BY kq.priority ASC, kq.created_at ASC';
+
+      const result = await pool.query(query, params);
+
+      return {
+        success: true,
+        queue: result.rows,
+        count: result.rows.length
+      };
+
+    } catch (error: any) {
+      logger.error('Error al obtener cola', error as Error);
+      throw error;
+    }
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // OBTENER ITEMS POR ESTACIÓN
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  static async getQueueByStation(station: string) {
+    try {
+      const query = `, SELECT, kq. * , oi.quantity, oi.special_instructions, mi.name, o.order_number, o.order_type, t.table_number, FROM, kitchen_queue, kq, JOIN, order_items, oi, ON, kq.order_item_id = oi.id, JOIN, menu_items, mi, ON, oi.menu_item_id = mi.id, JOIN, orders, o, ON, oi.order_id = o.id, LEFT, JOIN, tables, t, ON, o.table_id = t.id, WHERE, kq.assigned_station = $1, AND, kq.status, IN('queued', 'preparing'), ORDER, BY, kq.priority, ASC, kq.created_at, ASC `;
+
+      const result = await pool.query(query, [station]);
+
+      return {
+        success: true,
+        queue: result.rows,
+        count: result.rows.length,
+        station
+      };
+
+    } catch (error: any) {
+      logger.error('Error al obtener cola por estación', error as Error);
+      throw error;
+    }
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // INICIAR PREPARACIÓN
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  static async startPreparation(queueId: string) {
+    const client = await pool.connect();
+
+    try {
+      await client.query('BEGIN');
+
+      ValidationService.validateUUID(queueId);
+
+      // 1. Actualizar estado en kitchen_queue
+      const updateQueue = `, UPDATE, kitchen_queue, SET, status = 'preparing', started_at = CURRENT_TIMESTAMP, WHERE, id = $1, AND, status = 'queued', RETURNING, order_item_id `;
+
+      const result = await client.query(updateQueue, [queueId]);
+
+      if (result.rows.length === 0) {
+        throw new Error('Item no encontrado o ya en preparación');
+      }
+
+      // 2. Actualizar estado del order_item
+      await client.query(
+        `, UPDATE, order_items, SET, status = 'preparing', WHERE, id = $1 `,
+        [result.rows[0].order_item_id]
+      );
+
+      await client.query('COMMIT');
+
+      logger.info('Preparación iniciada para item: ${queueId}');
+      return {
+        success: true,
+        message: 'Preparación iniciada'
+      };
+
+    } catch (error: any) {
+      await client.query('ROLLBACK');
+      logger.error('Error al iniciar preparación', error as Error);
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // COMPLETAR ITEM (marcar como listo)
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  static async completeItem(queueId: string) {
+    const client = await pool.connect();
+
+    try {
+      await client.query('BEGIN');
+
+      ValidationService.validateUUID(queueId);
+
+      // 1. Actualizar estado en kitchen_queue
+      const updateQueue = `, UPDATE, kitchen_queue, SET, status = 'ready', completed_at = CURRENT_TIMESTAMP, WHERE, id = $1, AND, status = 'preparing', RETURNING, order_item_id `;
+
+      const result = await client.query(updateQueue, [queueId]);
+
+      if (result.rows.length === 0) {
+        throw new Error('Item no encontrado o no está en preparación');
+      }
+
+      // 2. Actualizar estado del order_item
+      await client.query(
+        `, UPDATE, order_items, SET, status = 'ready', WHERE, id = $1 `,
+        [result.rows[0].order_item_id]
+      );
+
+      // 3. Obtener info del pedido y item para notificaciones
+      const orderInfo = await client.query(
+        `, SELECT, o.id, o.order_number, o.customer_id, o.waiter_id, mi.name, FROM, order_items, oi, JOIN, orders, o, ON, oi.order_id = o.id, JOIN, menu_items, mi, ON, oi.menu_item_id = mi.id, WHERE, oi.id = $1 `,
+        [result.rows[0].order_item_id]
+      );
+
+      await client.query('COMMIT');
+
+      logger.info('Item completado: ${queueId}');
+
+      // Notificar via WebSocket que el item está listo
+      if (orderInfo.rows.length > 0) {
+        const order = orderInfo.rows[0];
+        WebSocketService.notifyOrderItemReady(
+          order.order_id,
+          order.order_number,
+          result.rows[0].order_item_id,
+          order.item_name,
+          order.waiter_id
+        );
+      }
+
+      return {
+        success: true,
+        message: 'Item marcado como listo'
+      };
+
+    } catch (error: any) {
+      await client.query('ROLLBACK');
+      logger.error('Error al completar item', error as Error);
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // ACTUALIZAR PRIORIDAD
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  static async updatePriority(queueId: string, priority: number) {
+    try {
+      ValidationService.validateUUID(queueId);
+
+      if (priority < 1 || priority > 5) {
+        throw new Error('Prioridad debe estar entre 1 (urgente) y 5 (baja)');
+      }
+
+      const query = `, UPDATE, kitchen_queue, SET, priority = $1, WHERE, id = $2, AND, status, IN('queued', 'preparing'), RETURNING *
+                        `;
+
+      const result = await pool.query(query, [priority, queueId]);
+
+      if (result.rows.length === 0) {
+        throw new Error('Item no encontrado o ya completado');
+      }
+
+      logger.info('Prioridad actualizada: ${priority}');
+      return {
+        success: true,
+        queueItem: result.rows[0],
+        message: 'Prioridad actualizada'
+      };
+
+    } catch (error: any) {
+      logger.error('Error al actualizar prioridad', error as Error);
+      throw error;
+    }
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // ACTUALIZAR ESTACIÓN ASIGNADA
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  static async updateStation(queueId: string, station: string) {
+    try {
+      ValidationService.validateUUID(queueId);
+
+      const query = `, UPDATE, kitchen_queue, SET, assigned_station = $1, WHERE, id = $2, AND, status, IN('queued', 'preparing'), RETURNING *
+                        `;
+
+      const result = await pool.query(query, [station, queueId]);
+
+      if (result.rows.length === 0) {
+        throw new Error('Item no encontrado o ya completado');
+      }
+
+      logger.info('Estación actualizada: ${station}');
+      return {
+        success: true,
+        queueItem: result.rows[0],
+        message: `, Estación, actualizada, a, $, { station } `
+      };
+
+    } catch (error: any) {
+      logger.error('Error al actualizar estación', error as Error);
+      throw error;
+    }
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // OBTENER ESTADÍSTICAS DE COCINA
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  static async getKitchenStats() {
+    try {
+      const query = `, SELECT, COUNT( * ), SUM(CASE, WHEN, status = 'queued', THEN, 1, ELSE, 0, END), SUM(CASE, WHEN, status = 'preparing', THEN, 1, ELSE, 0, END), SUM(CASE, WHEN, status = 'ready', THEN, 1, ELSE, 0, END), AVG(CASE, WHEN, completed_at, IS, NOT, NULL, AND, started_at, IS, NOT, NULL, THEN, EXTRACT(EPOCH, FROM(completed_at - started_at)) / 60, END), AVG(CASE, WHEN, started_at, IS, NOT, NULL, THEN, EXTRACT(EPOCH, FROM(started_at - created_at)) / 60, END), FROM, kitchen_queue, WHERE, created_at > CURRENT_TIMESTAMP - INTERVAL, '24 hours' `;
+
+      const result = await pool.query(query);
+      const stats = result.rows[0];
+
+      return {
+        success: true,
+        stats: {
+          totalItems: parseInt(stats.total_items),
+          queued: parseInt(stats.queued),
+          preparing: parseInt(stats.preparing),
+          ready: parseInt(stats.ready),
+          avgPreparationTime: stats.avg_preparation_time_minutes
+            ? parseFloat(stats.avg_preparation_time_minutes).toFixed(1)
+            : null,
+          avgWaitTime: stats.avg_wait_time_minutes
+            ? parseFloat(stats.avg_wait_time_minutes).toFixed(1)
+            : null
+        }
+      };
+
+    } catch (error: any) {
+      logger.error('Error al obtener estadísticas', error as Error);
+      throw error;
+    }
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // OBTENER ESTADÍSTICAS POR ESTACIÓN
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  static async getStationStats(station: string) {
+    try {
+      const query = `, SELECT, assigned_station, COUNT( * ), SUM(CASE, WHEN, status = 'queued', THEN, 1, ELSE, 0, END), SUM(CASE, WHEN, status = 'preparing', THEN, 1, ELSE, 0, END), SUM(CASE, WHEN, status = 'ready', THEN, 1, ELSE, 0, END), AVG(CASE, WHEN, completed_at, IS, NOT, NULL, AND, started_at, IS, NOT, NULL, THEN, EXTRACT(EPOCH, FROM(completed_at - started_at)) / 60, END), FROM, kitchen_queue, WHERE, assigned_station = $1, AND, created_at > CURRENT_TIMESTAMP - INTERVAL, '24 hours', GROUP, BY, assigned_station `;
+
+      const result = await pool.query(query, [station]);
+
+      if (result.rows.length === 0) {
+        return {
+          success: true,
+          stats: {
+            station,
+            totalItems: 0,
+            queued: 0,
+            preparing: 0,
+            ready: 0,
+            avgPreparationTime: null
+          }
+        };
+      }
+
+      const stats = result.rows[0];
+
+      return {
+        success: true,
+        stats: {
+          station: stats.assigned_station,
+          totalItems: parseInt(stats.total_items),
+          queued: parseInt(stats.queued),
+          preparing: parseInt(stats.preparing),
+          ready: parseInt(stats.ready),
+          avgPreparationTime: stats.avg_preparation_time_minutes
+            ? parseFloat(stats.avg_preparation_time_minutes).toFixed(1)
+            : null
+        }
+      };
+
+    } catch (error: any) {
+      logger.error('Error al obtener estadísticas por estación', error as Error);
+      throw error;
+    }
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // OBTENER ITEMS DE UN PEDIDO ESPECÍFICO
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  static async getQueueByOrder(orderId: string) {
+    try {
+      ValidationService.validateUUID(orderId);
+
+      const query = `, SELECT, kq. * , oi.quantity, oi.special_instructions, mi.name, mi.station, FROM, kitchen_queue, kq, JOIN, order_items, oi, ON, kq.order_item_id = oi.id, JOIN, menu_items, mi, ON, oi.menu_item_id = mi.id, WHERE, oi.order_id = $1, ORDER, BY, kq.priority, ASC, kq.created_at, ASC `;
+
+      const result = await pool.query(query, [orderId]);
+
+      return {
+        success: true,
+        queue: result.rows,
+        count: result.rows.length
+      };
+
+    } catch (error: any) {
+      logger.error('Error al obtener items del pedido', error as Error);
+      throw error;
+    }
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // VERIFICAR SI TODOS LOS ITEMS DEL PEDIDO ESTÁN LISTOS
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  static async checkOrderReady(orderId: string) {
+    try {
+      ValidationService.validateUUID(orderId);
+
+      const query = `, SELECT, COUNT( * ), SUM(CASE, WHEN, kq.status = 'ready', THEN, 1, ELSE, 0, END), FROM, order_items, oi, LEFT, JOIN, kitchen_queue, kq, ON, oi.id = kq.order_item_id, WHERE, oi.order_id = $1 `;
+
+      const result = await pool.query(query, [orderId]);
+      const data = result.rows[0];
+
+      const totalItems = parseInt(data.total_items);
+      const readyItems = parseInt(data.ready_items);
+      const allReady = totalItems > 0 && totalItems === readyItems;
+
+      return {
+        success: true,
+        orderId,
+        totalItems,
+        readyItems,
+        allReady,
+        message: allReady ? 'Pedido completo y listo' : `, $, { readyItems } / $, { totalItems }, items, listos `
+      };
+
+    } catch (error: any) {
+      logger.error('Error al verificar pedido', error as Error);
+      throw error;
+    }
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // OBTENER LISTA DE ESTACIONES ÚNICAS
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  static async getStations() {
+    try {
+      const query = `, SELECT, DISTINCT, assigned_station, FROM, kitchen_queue, WHERE, assigned_station, IS, NOT, NULL, ORDER, BY, assigned_station, ASC `;
+
+      const result = await pool.query(query);
+
+      return {
+        success: true,
+        stations: result.rows.map(r => r.station),
+        count: result.rows.length
+      };
+
+    } catch (error: any) {
+      logger.error('Error al obtener estaciones', error as Error);
+      throw error;
+    }
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // ELIMINAR ITEM DE LA COLA (si pedido se cancela)
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  static async removeFromQueue(queueId: string) {
+    try {
+      ValidationService.validateUUID(queueId);
+
+      const deleteQuery = await pool.query(
+        'DELETE FROM kitchen_queue WHERE id = $1 RETURNING order_item_id',
+        [queueId]
+      );
+
+      if (deleteQuery.rows.length === 0) {
+        throw new Error('Item no encontrado en la cola');
+      }
+
+      logger.info('Item eliminado de la cola: ${queueId}');
+      return {
+        success: true,
+        message: 'Item eliminado de la cola'
+      };
+
+    } catch (error: any) {
+      logger.error('Error al eliminar de cola', error as Error);
+      throw error;
+    }
+  }
+}
+                    );
                 }
-                query += ' WHERE kq.status = $1';
-                params.push(statusFilter);
             }
-            // Ordenar por prioridad (1 = más urgente) y fecha de creación
-            query += ' ORDER BY kq.priority ASC, kq.created_at ASC';
-            const result = await pool.query(query, params);
-            return {
-                success: true,
-                queue: result.rows,
-                count: result.rows.length
-            };
         }
-        catch (error) {
-            console.error('❌ Error al obtener cola:', error.message);
-            throw error;
-        }
-    }
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // OBTENER ITEMS POR ESTACIÓN
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    static async getQueueByStation(station) {
-        try {
-            const query = `
-        SELECT
-          kq.*,
-          oi.quantity,
-          oi.special_instructions,
-          mi.name as item_name,
-          o.order_number,
-          o.order_type,
-          t.table_number
-        FROM kitchen_queue kq
-        JOIN order_items oi ON kq.order_item_id = oi.id
-        JOIN menu_items mi ON oi.menu_item_id = mi.id
-        JOIN orders o ON oi.order_id = o.id
-        LEFT JOIN tables t ON o.table_id = t.id
-        WHERE kq.assigned_station = $1
-          AND kq.status IN ('queued', 'preparing')
-        ORDER BY kq.priority ASC, kq.created_at ASC
-      `;
-            const result = await pool.query(query, [station]);
-            return {
-                success: true,
-                queue: result.rows,
-                count: result.rows.length,
-                station
-            };
-        }
-        catch (error) {
-            console.error('❌ Error al obtener cola por estación:', error.message);
-            throw error;
-        }
-    }
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // INICIAR PREPARACIÓN
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    static async startPreparation(queueId) {
-        const client = await pool.connect();
-        try {
-            await client.query('BEGIN');
-            ValidationService_1.ValidationService.validateUUID(queueId);
-            // 1. Actualizar estado en kitchen_queue
-            const updateQueue = `
-        UPDATE kitchen_queue
-        SET status = 'preparing',
-            started_at = CURRENT_TIMESTAMP
-        WHERE id = $1 AND status = 'queued'
-        RETURNING order_item_id
-      `;
-            const result = await client.query(updateQueue, [queueId]);
-            if (result.rows.length === 0) {
-                throw new Error('Item no encontrado o ya en preparación');
-            }
-            // 2. Actualizar estado del order_item
-            await client.query(`UPDATE order_items
-         SET status = 'preparing'
-         WHERE id = $1`, [result.rows[0].order_item_id]);
-            await client.query('COMMIT');
-            console.log(`✅ Preparación iniciada para item: ${queueId}`);
-            return {
-                success: true,
-                message: 'Preparación iniciada'
-            };
-        }
-        catch (error) {
-            await client.query('ROLLBACK');
-            console.error('❌ Error al iniciar preparación:', error.message);
-            throw error;
-        }
-        finally {
-            client.release();
-        }
-    }
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // COMPLETAR ITEM (marcar como listo)
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    static async completeItem(queueId) {
-        const client = await pool.connect();
-        try {
-            await client.query('BEGIN');
-            ValidationService_1.ValidationService.validateUUID(queueId);
-            // 1. Actualizar estado en kitchen_queue
-            const updateQueue = `
-        UPDATE kitchen_queue
-        SET status = 'ready',
-            completed_at = CURRENT_TIMESTAMP
-        WHERE id = $1 AND status = 'preparing'
-        RETURNING order_item_id
-      `;
-            const result = await client.query(updateQueue, [queueId]);
-            if (result.rows.length === 0) {
-                throw new Error('Item no encontrado o no está en preparación');
-            }
-            // 2. Actualizar estado del order_item
-            await client.query(`UPDATE order_items
-         SET status = 'ready'
-         WHERE id = $1`, [result.rows[0].order_item_id]);
-            // 3. Obtener info del pedido y item para notificaciones
-            const orderInfo = await client.query(`SELECT o.id as order_id, o.order_number, o.customer_id, o.waiter_id,
-                mi.name as item_name
-         FROM order_items oi
-         JOIN orders o ON oi.order_id = o.id
-         JOIN menu_items mi ON oi.menu_item_id = mi.id
-         WHERE oi.id = $1`, [result.rows[0].order_item_id]);
-            await client.query('COMMIT');
-            console.log(`✅ Item completado: ${queueId}`);
-            // Notificar via WebSocket que el item está listo
-            if (orderInfo.rows.length > 0) {
-                const order = orderInfo.rows[0];
-                WebSocketService_1.WebSocketService.notifyOrderItemReady(order.order_id, order.order_number, result.rows[0].order_item_id, order.item_name, order.waiter_id);
-            }
-            return {
-                success: true,
-                message: 'Item marcado como listo'
-            };
-        }
-        catch (error) {
-            await client.query('ROLLBACK');
-            console.error('❌ Error al completar item:', error.message);
-            throw error;
-        }
-        finally {
-            client.release();
-        }
-    }
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // ACTUALIZAR PRIORIDAD
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    static async updatePriority(queueId, priority) {
-        try {
-            ValidationService_1.ValidationService.validateUUID(queueId);
-            if (priority < 1 || priority > 5) {
-                throw new Error('Prioridad debe estar entre 1 (urgente) y 5 (baja)');
-            }
-            const query = `
-        UPDATE kitchen_queue
-        SET priority = $1
-        WHERE id = $2 AND status IN ('queued', 'preparing')
-        RETURNING *
-      `;
-            const result = await pool.query(query, [priority, queueId]);
-            if (result.rows.length === 0) {
-                throw new Error('Item no encontrado o ya completado');
-            }
-            console.log(`✅ Prioridad actualizada: ${priority}`);
-            return {
-                success: true,
-                queueItem: result.rows[0],
-                message: 'Prioridad actualizada'
-            };
-        }
-        catch (error) {
-            console.error('❌ Error al actualizar prioridad:', error.message);
-            throw error;
-        }
-    }
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // ACTUALIZAR ESTACIÓN ASIGNADA
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    static async updateStation(queueId, station) {
-        try {
-            ValidationService_1.ValidationService.validateUUID(queueId);
-            const query = `
-        UPDATE kitchen_queue
-        SET assigned_station = $1
-        WHERE id = $2 AND status IN ('queued', 'preparing')
-        RETURNING *
-      `;
-            const result = await pool.query(query, [station, queueId]);
-            if (result.rows.length === 0) {
-                throw new Error('Item no encontrado o ya completado');
-            }
-            console.log(`✅ Estación actualizada: ${station}`);
-            return {
-                success: true,
-                queueItem: result.rows[0],
-                message: `Estación actualizada a ${station}`
-            };
-        }
-        catch (error) {
-            console.error('❌ Error al actualizar estación:', error.message);
-            throw error;
-        }
-    }
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // OBTENER ESTADÍSTICAS DE COCINA
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    static async getKitchenStats() {
-        try {
-            const query = `
-        SELECT
-          COUNT(*) as total_items,
-          SUM(CASE WHEN status = 'queued' THEN 1 ELSE 0 END) as queued,
-          SUM(CASE WHEN status = 'preparing' THEN 1 ELSE 0 END) as preparing,
-          SUM(CASE WHEN status = 'ready' THEN 1 ELSE 0 END) as ready,
-          AVG(CASE
-            WHEN completed_at IS NOT NULL AND started_at IS NOT NULL
-            THEN EXTRACT(EPOCH FROM (completed_at - started_at))/60
-          END) as avg_preparation_time_minutes,
-          AVG(CASE
-            WHEN started_at IS NOT NULL
-            THEN EXTRACT(EPOCH FROM (started_at - created_at))/60
-          END) as avg_wait_time_minutes
-        FROM kitchen_queue
-        WHERE created_at > CURRENT_TIMESTAMP - INTERVAL '24 hours'
-      `;
-            const result = await pool.query(query);
-            const stats = result.rows[0];
-            return {
-                success: true,
-                stats: {
-                    totalItems: parseInt(stats.total_items),
-                    queued: parseInt(stats.queued),
-                    preparing: parseInt(stats.preparing),
-                    ready: parseInt(stats.ready),
-                    avgPreparationTime: stats.avg_preparation_time_minutes
-                        ? parseFloat(stats.avg_preparation_time_minutes).toFixed(1)
-                        : null,
-                    avgWaitTime: stats.avg_wait_time_minutes
-                        ? parseFloat(stats.avg_wait_time_minutes).toFixed(1)
-                        : null
-                }
-            };
-        }
-        catch (error) {
-            console.error('❌ Error al obtener estadísticas:', error.message);
-            throw error;
-        }
-    }
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // OBTENER ESTADÍSTICAS POR ESTACIÓN
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    static async getStationStats(station) {
-        try {
-            const query = `
-        SELECT
-          assigned_station,
-          COUNT(*) as total_items,
-          SUM(CASE WHEN status = 'queued' THEN 1 ELSE 0 END) as queued,
-          SUM(CASE WHEN status = 'preparing' THEN 1 ELSE 0 END) as preparing,
-          SUM(CASE WHEN status = 'ready' THEN 1 ELSE 0 END) as ready,
-          AVG(CASE
-            WHEN completed_at IS NOT NULL AND started_at IS NOT NULL
-            THEN EXTRACT(EPOCH FROM (completed_at - started_at))/60
-          END) as avg_preparation_time_minutes
-        FROM kitchen_queue
-        WHERE assigned_station = $1
-          AND created_at > CURRENT_TIMESTAMP - INTERVAL '24 hours'
-        GROUP BY assigned_station
-      `;
-            const result = await pool.query(query, [station]);
-            if (result.rows.length === 0) {
-                return {
-                    success: true,
-                    stats: {
-                        station,
-                        totalItems: 0,
-                        queued: 0,
-                        preparing: 0,
-                        ready: 0,
-                        avgPreparationTime: null
-                    }
-                };
-            }
-            const stats = result.rows[0];
-            return {
-                success: true,
-                stats: {
-                    station: stats.assigned_station,
-                    totalItems: parseInt(stats.total_items),
-                    queued: parseInt(stats.queued),
-                    preparing: parseInt(stats.preparing),
-                    ready: parseInt(stats.ready),
-                    avgPreparationTime: stats.avg_preparation_time_minutes
-                        ? parseFloat(stats.avg_preparation_time_minutes).toFixed(1)
-                        : null
-                }
-            };
-        }
-        catch (error) {
-            console.error('❌ Error al obtener estadísticas por estación:', error.message);
-            throw error;
-        }
-    }
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // OBTENER ITEMS DE UN PEDIDO ESPECÍFICO
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    static async getQueueByOrder(orderId) {
-        try {
-            ValidationService_1.ValidationService.validateUUID(orderId);
-            const query = `
-        SELECT
-          kq.*,
-          oi.quantity,
-          oi.special_instructions,
-          mi.name as item_name,
-          mi.station as default_station
-        FROM kitchen_queue kq
-        JOIN order_items oi ON kq.order_item_id = oi.id
-        JOIN menu_items mi ON oi.menu_item_id = mi.id
-        WHERE oi.order_id = $1
-        ORDER BY kq.priority ASC, kq.created_at ASC
-      `;
-            const result = await pool.query(query, [orderId]);
-            return {
-                success: true,
-                queue: result.rows,
-                count: result.rows.length
-            };
-        }
-        catch (error) {
-            console.error('❌ Error al obtener items del pedido:', error.message);
-            throw error;
-        }
-    }
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // VERIFICAR SI TODOS LOS ITEMS DEL PEDIDO ESTÁN LISTOS
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    static async checkOrderReady(orderId) {
-        try {
-            ValidationService_1.ValidationService.validateUUID(orderId);
-            const query = `
-        SELECT
-          COUNT(*) as total_items,
-          SUM(CASE WHEN kq.status = 'ready' THEN 1 ELSE 0 END) as ready_items
-        FROM order_items oi
-        LEFT JOIN kitchen_queue kq ON oi.id = kq.order_item_id
-        WHERE oi.order_id = $1
-      `;
-            const result = await pool.query(query, [orderId]);
-            const data = result.rows[0];
-            const totalItems = parseInt(data.total_items);
-            const readyItems = parseInt(data.ready_items);
-            const allReady = totalItems > 0 && totalItems === readyItems;
-            return {
-                success: true,
-                orderId,
-                totalItems,
-                readyItems,
-                allReady,
-                message: allReady ? 'Pedido completo y listo' : `${readyItems}/${totalItems} items listos`
-            };
-        }
-        catch (error) {
-            console.error('❌ Error al verificar pedido:', error.message);
-            throw error;
-        }
-    }
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // OBTENER LISTA DE ESTACIONES ÚNICAS
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    static async getStations() {
-        try {
-            const query = `
-        SELECT DISTINCT assigned_station as station
-        FROM kitchen_queue
-        WHERE assigned_station IS NOT NULL
-        ORDER BY assigned_station ASC
-      `;
-            const result = await pool.query(query);
-            return {
-                success: true,
-                stations: result.rows.map(r => r.station),
-                count: result.rows.length
-            };
-        }
-        catch (error) {
-            console.error('❌ Error al obtener estaciones:', error.message);
-            throw error;
-        }
-    }
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // ELIMINAR ITEM DE LA COLA (si pedido se cancela)
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    static async removeFromQueue(queueId) {
-        try {
-            ValidationService_1.ValidationService.validateUUID(queueId);
-            const deleteQuery = await pool.query('DELETE FROM kitchen_queue WHERE id = $1 RETURNING order_item_id', [queueId]);
-            if (deleteQuery.rows.length === 0) {
-                throw new Error('Item no encontrado en la cola');
-            }
-            console.log(`✅ Item eliminado de la cola: ${queueId}`);
-            return {
-                success: true,
-                message: 'Item eliminado de la cola'
-            };
-        }
-        catch (error) {
-            console.error('❌ Error al eliminar de cola:', error.message);
-            throw error;
-        }
+        finally { }
     }
 }
 exports.KitchenService = KitchenService;
