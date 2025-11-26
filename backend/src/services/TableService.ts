@@ -4,6 +4,7 @@
 
 import { getPool } from '@config/database';
 import { ValidationService } from './ValidationService';
+import { logger } from '../utils/logger';
 
 const pool = getPool();
 
@@ -59,7 +60,7 @@ export class TableService {
         data.zone || null
       ]);
 
-      console.log(`✅ Mesa creada: ${data.table_number} (capacidad: ${data.capacity})`);
+      logger.info('Mesa creada', { table_number: data.table_number, capacity: data.capacity });
       return {
         success: true,
         table: result.rows[0],
@@ -67,7 +68,7 @@ export class TableService {
       };
 
     } catch (error: any) {
-      console.error('❌ Error al crear mesa:', error.message);
+      logger.error('Error al crear mesa', error as Error);
       throw error;
     }
   }
@@ -97,7 +98,7 @@ export class TableService {
       };
 
     } catch (error: any) {
-      console.error('❌ Error al obtener mesas:', error.message);
+      logger.error('Error al obtener mesas', error as Error);
       throw error;
     }
   }
@@ -135,7 +136,7 @@ export class TableService {
       };
 
     } catch (error: any) {
-      console.error('❌ Error al obtener mesa:', error.message);
+      logger.error('Error al obtener mesa', error as Error);
       throw error;
     }
   }
@@ -169,7 +170,7 @@ export class TableService {
       };
 
     } catch (error: any) {
-      console.error('❌ Error al obtener mesa por número:', error.message);
+      logger.error('Error al obtener mesa por número', error as Error);
       throw error;
     }
   }
@@ -206,7 +207,7 @@ export class TableService {
       };
 
     } catch (error: any) {
-      console.error('❌ Error al obtener mesas por estado:', error.message);
+      logger.error('Error al obtener mesas por estado', error as Error);
       throw error;
     }
   }
@@ -238,7 +239,7 @@ export class TableService {
       };
 
     } catch (error: any) {
-      console.error('❌ Error al obtener mesas por zona:', error.message);
+      logger.error('Error al obtener mesas por zona', error as Error);
       throw error;
     }
   }
@@ -273,7 +274,7 @@ export class TableService {
       };
 
     } catch (error: any) {
-      console.error('❌ Error al obtener mesas disponibles:', error.message);
+      logger.error('Error al obtener mesas disponibles', error as Error);
       throw error;
     }
   }
@@ -307,7 +308,7 @@ export class TableService {
         throw new Error('Mesa no encontrada');
       }
 
-      console.log(`✅ Mesa ${result.rows[0].table_number} → ${status}`);
+      logger.info('Estado de mesa actualizado', { table_number: result.rows[0].table_number, status });
       return {
         success: true,
         table: result.rows[0],
@@ -315,7 +316,7 @@ export class TableService {
       };
 
     } catch (error: any) {
-      console.error('❌ Error al actualizar estado de mesa:', error.message);
+      logger.error('Error al actualizar estado de mesa', error as Error);
       throw error;
     }
   }
@@ -343,7 +344,7 @@ export class TableService {
         throw new Error('Mesa no encontrada');
       }
 
-      console.log(`✅ Pedido asignado a mesa ${result.rows[0].table_number}`);
+      logger.info('Pedido asignado a mesa', { table_number: result.rows[0].table_number, orderId });
       return {
         success: true,
         table: result.rows[0],
@@ -351,7 +352,7 @@ export class TableService {
       };
 
     } catch (error: any) {
-      console.error('❌ Error al asignar pedido:', error.message);
+      logger.error('Error al asignar pedido', error as Error);
       throw error;
     }
   }
@@ -379,7 +380,7 @@ export class TableService {
         throw new Error('Mesa no encontrada');
       }
 
-      console.log(`✅ Reserva asignada a mesa ${result.rows[0].table_number}`);
+      logger.info('Reserva asignada a mesa', { table_number: result.rows[0].table_number, reservationId });
       return {
         success: true,
         table: result.rows[0],
@@ -387,7 +388,7 @@ export class TableService {
       };
 
     } catch (error: any) {
-      console.error('❌ Error al asignar reserva:', error.message);
+      logger.error('Error al asignar reserva', error as Error);
       throw error;
     }
   }
@@ -417,7 +418,7 @@ export class TableService {
         throw new Error('Mesa no encontrada');
       }
 
-      console.log(`✅ Mesa ${result.rows[0].table_number} liberada → ${newStatus}`);
+      logger.info('Mesa liberada', { table_number: result.rows[0].table_number, status: newStatus });
       return {
         success: true,
         table: result.rows[0],
@@ -425,7 +426,7 @@ export class TableService {
       };
 
     } catch (error: any) {
-      console.error('❌ Error al liberar mesa:', error.message);
+      logger.error('Error al liberar mesa', error as Error);
       throw error;
     }
   }
@@ -488,7 +489,7 @@ export class TableService {
         throw new Error('Mesa no encontrada');
       }
 
-      console.log(`✅ Mesa ${result.rows[0].table_number} actualizada`);
+      logger.info('Mesa actualizada', { table_number: result.rows[0].table_number });
       return {
         success: true,
         table: result.rows[0],
@@ -496,7 +497,7 @@ export class TableService {
       };
 
     } catch (error: any) {
-      console.error('❌ Error al actualizar mesa:', error.message);
+      logger.error('Error al actualizar mesa', error as Error);
       throw error;
     }
   }
@@ -531,14 +532,14 @@ export class TableService {
         [tableId]
       );
 
-      console.log(`✅ Mesa ${table.table_number} eliminada`);
+      logger.info('Mesa eliminada', { table_number: table.table_number });
       return {
         success: true,
         message: `Mesa ${table.table_number} eliminada exitosamente`
       };
 
     } catch (error: any) {
-      console.error('❌ Error al eliminar mesa:', error.message);
+      logger.error('Error al eliminar mesa', error as Error);
       throw error;
     }
   }
@@ -577,7 +578,7 @@ export class TableService {
       };
 
     } catch (error: any) {
-      console.error('❌ Error al obtener estadísticas:', error.message);
+      logger.error('Error al obtener estadísticas', error as Error);
       throw error;
     }
   }

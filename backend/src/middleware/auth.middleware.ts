@@ -4,6 +4,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { AuthService } from '@services/AuthService';
+import { logger } from '../utils/logger';
 
 // Extender el tipo Request para incluir user
 declare global {
@@ -64,7 +65,7 @@ export const authenticate = async (
     next();
 
   } catch (error: any) {
-    console.error('❌ Error en middleware de autenticación:', error.message);
+    logger.error('Error en middleware de autenticación', error as Error);
     return res.status(401).json({
       success: false,
       error: 'Error de autenticación'

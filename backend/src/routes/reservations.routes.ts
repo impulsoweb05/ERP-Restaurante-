@@ -6,6 +6,7 @@ import { Router, Request, Response } from 'express';
 import { ReservationService } from '@services/ReservationService';
 import { NotificationService } from '@services/NotificationService';
 import { authenticate, isWaiterOrAdmin, isCustomer } from '@middleware/auth.middleware';
+import { logger } from '../utils/logger';
 
 const router = Router();
 
@@ -54,12 +55,12 @@ router.post('/', authenticate, async (req: Request, res: Response) => {
       result.reservation.reservation_number,
       reservation_date,
       reservation_time
-    ).catch(err => console.error('Error al enviar notificación:', err));
+    ).catch(err => logger.error('Error al enviar notificación', err as Error));
 
     res.status(201).json(result);
 
   } catch (error: any) {
-    console.error('❌ Error al crear reserva:', error.message);
+    logger.error('Error al crear reserva', error as Error);
     res.status(500).json({
       success: false,
       error: error.message
@@ -83,7 +84,7 @@ router.get('/:id', authenticate, async (req: Request, res: Response) => {
     res.json(result);
 
   } catch (error: any) {
-    console.error('❌ Error al obtener reserva:', error.message);
+    logger.error('Error al obtener reserva', error as Error);
     res.status(500).json({
       success: false,
       error: error.message
@@ -111,7 +112,7 @@ router.get('/customer/:customerId', authenticate, async (req: Request, res: Resp
     res.json(result);
 
   } catch (error: any) {
-    console.error('❌ Error al obtener reservas del cliente:', error.message);
+    logger.error('Error al obtener reservas del cliente', error as Error);
     res.status(500).json({
       success: false,
       error: error.message
@@ -135,7 +136,7 @@ router.get('/date/:date', authenticate, isWaiterOrAdmin, async (req: Request, re
     res.json(result);
 
   } catch (error: any) {
-    console.error('❌ Error al obtener reservas por fecha:', error.message);
+    logger.error('Error al obtener reservas por fecha', error as Error);
     res.status(500).json({
       success: false,
       error: error.message
@@ -162,7 +163,7 @@ router.put('/:id', authenticate, async (req: Request, res: Response) => {
     res.json(result);
 
   } catch (error: any) {
-    console.error('❌ Error al actualizar reserva:', error.message);
+    logger.error('Error al actualizar reserva', error as Error);
     res.status(500).json({
       success: false,
       error: error.message
@@ -182,7 +183,7 @@ router.put('/:id/confirm', authenticate, isWaiterOrAdmin, async (req: Request, r
     res.json(result);
 
   } catch (error: any) {
-    console.error('❌ Error al confirmar reserva:', error.message);
+    logger.error('Error al confirmar reserva', error as Error);
     res.status(500).json({
       success: false,
       error: error.message
@@ -202,7 +203,7 @@ router.put('/:id/activate', authenticate, isWaiterOrAdmin, async (req: Request, 
     res.json(result);
 
   } catch (error: any) {
-    console.error('❌ Error al activar reserva:', error.message);
+    logger.error('Error al activar reserva', error as Error);
     res.status(500).json({
       success: false,
       error: error.message
@@ -222,7 +223,7 @@ router.put('/:id/complete', authenticate, isWaiterOrAdmin, async (req: Request, 
     res.json(result);
 
   } catch (error: any) {
-    console.error('❌ Error al completar reserva:', error.message);
+    logger.error('Error al completar reserva', error as Error);
     res.status(500).json({
       success: false,
       error: error.message
@@ -243,7 +244,7 @@ router.put('/:id/cancel', authenticate, async (req: Request, res: Response) => {
     res.json(result);
 
   } catch (error: any) {
-    console.error('❌ Error al cancelar reserva:', error.message);
+    logger.error('Error al cancelar reserva', error as Error);
     res.status(500).json({
       success: false,
       error: error.message
@@ -263,7 +264,7 @@ router.put('/:id/no-show', authenticate, isWaiterOrAdmin, async (req: Request, r
     res.json(result);
 
   } catch (error: any) {
-    console.error('❌ Error al marcar no-show:', error.message);
+    logger.error('Error al marcar no-show', error as Error);
     res.status(500).json({
       success: false,
       error: error.message

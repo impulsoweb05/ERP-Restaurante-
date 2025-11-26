@@ -6,6 +6,7 @@ import { getPool } from '@config/database';
 import { ValidationService } from './ValidationService';
 import nodemailer from 'nodemailer';
 import axios from 'axios';
+import { logger } from '../utils/logger';
 
 const pool = getPool();
 
@@ -52,7 +53,7 @@ export class NotificationService {
       return result.rows[0];
 
     } catch (error: any) {
-      console.error('❌ Error al crear registro de notificación:', error.message);
+      logger.error('Error al crear registro de notificación', error as Error);
       throw error;
     }
   }
@@ -70,7 +71,7 @@ export class NotificationService {
         [notificationId]
       );
     } catch (error: any) {
-      console.error('❌ Error al marcar como enviada:', error.message);
+      logger.error('Error al marcar como enviada', error as Error);
     }
   }
 
@@ -87,7 +88,7 @@ export class NotificationService {
         [errorMessage, notificationId]
       );
     } catch (error: any) {
-      console.error('❌ Error al marcar como fallida:', error.message);
+      logger.error('Error al marcar como fallida', error as Error);
     }
   }
 
@@ -140,7 +141,7 @@ export class NotificationService {
       // 6. Marcar como enviado
       await this.markAsSent(notificationRecord.id);
 
-      console.log(`✅ Email enviado a ${data.recipient}`);
+      logger.info('Email enviado a ${data.recipient}`);
       return {
         success: true,
         notificationId: notificationRecord.id,
@@ -148,7 +149,7 @@ export class NotificationService {
       };
 
     } catch (error: any) {
-      console.error('❌ Error al enviar email:', error.message);
+      logger.error('Error al enviar email', error as Error);
 
       if (notificationRecord) {
         await this.markAsFailed(notificationRecord.id, error.message);
@@ -208,7 +209,7 @@ export class NotificationService {
         // 6. Marcar como enviado
         await this.markAsSent(notificationRecord.id);
 
-        console.log(`✅ WhatsApp enviado a ${data.recipient}`);
+        logger.info('WhatsApp enviado a ${data.recipient}`);
         return {
           success: true,
           notificationId: notificationRecord.id,
@@ -220,7 +221,7 @@ export class NotificationService {
       }
 
     } catch (error: any) {
-      console.error('❌ Error al enviar WhatsApp:', error.message);
+      logger.error('Error al enviar WhatsApp', error as Error);
 
       if (notificationRecord) {
         await this.markAsFailed(notificationRecord.id, error.message);
@@ -266,7 +267,7 @@ export class NotificationService {
         // 5. Marcar como enviado
         await this.markAsSent(notificationRecord.id);
 
-        console.log(`✅ Telegram enviado a chat ${data.recipient}`);
+        logger.info('Telegram enviado a chat ${data.recipient}`);
         return {
           success: true,
           notificationId: notificationRecord.id,
@@ -278,7 +279,7 @@ export class NotificationService {
       }
 
     } catch (error: any) {
-      console.error('❌ Error al enviar Telegram:', error.message);
+      logger.error('Error al enviar Telegram', error as Error);
 
       if (notificationRecord) {
         await this.markAsFailed(notificationRecord.id, error.message);
@@ -304,7 +305,7 @@ export class NotificationService {
           throw new Error(`Tipo de notificación no soportado: ${data.notification_type}`);
       }
     } catch (error: any) {
-      console.error('❌ Error al enviar notificación:', error.message);
+      logger.error('Error al enviar notificación', error as Error);
       throw error;
     }
   }
@@ -332,7 +333,7 @@ export class NotificationService {
       };
 
     } catch (error: any) {
-      console.error('❌ Error al obtener notificaciones del pedido:', error.message);
+      logger.error('Error al obtener notificaciones del pedido', error as Error);
       throw error;
     }
   }
@@ -360,7 +361,7 @@ export class NotificationService {
       };
 
     } catch (error: any) {
-      console.error('❌ Error al obtener notificaciones de la reserva:', error.message);
+      logger.error('Error al obtener notificaciones de la reserva', error as Error);
       throw error;
     }
   }
@@ -387,7 +388,7 @@ export class NotificationService {
       };
 
     } catch (error: any) {
-      console.error('❌ Error al obtener notificaciones fallidas:', error.message);
+      logger.error('Error al obtener notificaciones fallidas', error as Error);
       throw error;
     }
   }
@@ -434,7 +435,7 @@ export class NotificationService {
       return await this.sendNotification(data);
 
     } catch (error: any) {
-      console.error('❌ Error al reenviar notificación:', error.message);
+      logger.error('Error al reenviar notificación', error as Error);
       throw error;
     }
   }
@@ -477,7 +478,7 @@ export class NotificationService {
       };
 
     } catch (error: any) {
-      console.error('❌ Error al obtener estadísticas:', error.message);
+      logger.error('Error al obtener estadísticas', error as Error);
       throw error;
     }
   }
@@ -506,7 +507,7 @@ export class NotificationService {
       return await this.sendNotification(data);
 
     } catch (error: any) {
-      console.error('❌ Error en notificación de pedido:', error.message);
+      logger.error('Error en notificación de pedido', error as Error);
       // No lanzar error para no bloquear la creación del pedido
       return { success: false, error: error.message };
     }
@@ -537,7 +538,7 @@ export class NotificationService {
       return await this.sendNotification(data);
 
     } catch (error: any) {
-      console.error('❌ Error en notificación de reserva:', error.message);
+      logger.error('Error en notificación de reserva', error as Error);
       return { success: false, error: error.message };
     }
   }

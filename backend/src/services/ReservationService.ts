@@ -4,6 +4,7 @@
 
 import { getPool } from '@config/database';
 import { ValidationService } from './ValidationService';
+import { logger } from '../utils/logger';
 import { v4 as uuidv4 } from 'uuid';
 
 const pool = getPool();
@@ -60,7 +61,7 @@ export class ReservationService {
 
       const validationResult = ValidationService.validateAll(validations);
       if (!validationResult.isValid) {
-        throw new Error(`Errores de validación: ${validationResult.errors.join(', ')}`);
+        throw new Error(`Errores de validación: ${validationResult.errors.join(', ')}');
       }
 
       // 2. Verificar que el cliente existe
@@ -132,7 +133,7 @@ export class ReservationService {
 
       await client.query('COMMIT');
 
-      console.log(`✅ Reserva creada: ${reservationNumber}`);
+      logger.info('Reserva creada: ${reservationNumber}');
       return {
         success: true,
         reservation: result.rows[0],
@@ -141,7 +142,7 @@ export class ReservationService {
 
     } catch (error: any) {
       await client.query('ROLLBACK');
-      console.error('❌ Error al crear reserva:', error.message);
+      logger.error('Error al crear reserva', error as Error);
       throw error;
     } finally {
       client.release();
@@ -254,7 +255,7 @@ export class ReservationService {
       };
 
     } catch (error: any) {
-      console.error('❌ Error al obtener reserva:', error.message);
+      logger.error('Error al obtener reserva', error as Error);
       throw error;
     }
   }
@@ -287,7 +288,7 @@ export class ReservationService {
       };
 
     } catch (error: any) {
-      console.error('❌ Error al obtener reservas del cliente:', error.message);
+      logger.error('Error al obtener reservas del cliente', error as Error);
       throw error;
     }
   }
@@ -329,7 +330,7 @@ export class ReservationService {
       };
 
     } catch (error: any) {
-      console.error('❌ Error al obtener reservas por fecha:', error.message);
+      logger.error('Error al obtener reservas por fecha', error as Error);
       throw error;
     }
   }
@@ -362,7 +363,7 @@ export class ReservationService {
 
       await client.query('COMMIT');
 
-      console.log(`✅ Reserva confirmada: ${result.rows[0].reservation_number}`);
+      logger.info('Reserva confirmada: ${result.rows[0].reservation_number}');
       return {
         success: true,
         reservation: result.rows[0],
@@ -371,7 +372,7 @@ export class ReservationService {
 
     } catch (error: any) {
       await client.query('ROLLBACK');
-      console.error('❌ Error al confirmar reserva:', error.message);
+      logger.error('Error al confirmar reserva', error as Error);
       throw error;
     } finally {
       client.release();
@@ -416,7 +417,7 @@ export class ReservationService {
 
       await client.query('COMMIT');
 
-      console.log(`✅ Reserva activada: ${reservationId}`);
+      logger.info('Reserva activada: ${reservationId}');
       return {
         success: true,
         message: 'Reserva activada - Cliente sentado'
@@ -424,7 +425,7 @@ export class ReservationService {
 
     } catch (error: any) {
       await client.query('ROLLBACK');
-      console.error('❌ Error al activar reserva:', error.message);
+      logger.error('Error al activar reserva', error as Error);
       throw error;
     } finally {
       client.release();
@@ -486,7 +487,7 @@ export class ReservationService {
 
       await client.query('COMMIT');
 
-      console.log(`✅ Reserva cancelada: ${result.rows[0].reservation_number}`);
+      logger.info('Reserva cancelada: ${result.rows[0].reservation_number}');
       return {
         success: true,
         reservation: result.rows[0],
@@ -495,7 +496,7 @@ export class ReservationService {
 
     } catch (error: any) {
       await client.query('ROLLBACK');
-      console.error('❌ Error al cancelar reserva:', error.message);
+      logger.error('Error al cancelar reserva', error as Error);
       throw error;
     } finally {
       client.release();
@@ -540,7 +541,7 @@ export class ReservationService {
 
       await client.query('COMMIT');
 
-      console.log(`✅ Reserva marcada como no-show: ${reservationId}`);
+      logger.info('Reserva marcada como no-show: ${reservationId}');
       return {
         success: true,
         message: 'Reserva marcada como no-show'
@@ -548,7 +549,7 @@ export class ReservationService {
 
     } catch (error: any) {
       await client.query('ROLLBACK');
-      console.error('❌ Error al marcar no-show:', error.message);
+      logger.error('Error al marcar no-show', error as Error);
       throw error;
     } finally {
       client.release();
@@ -594,7 +595,7 @@ export class ReservationService {
 
       await client.query('COMMIT');
 
-      console.log(`✅ Reserva completada: ${reservationId}`);
+      logger.info('Reserva completada: ${reservationId}');
       return {
         success: true,
         message: 'Reserva completada exitosamente'
@@ -602,7 +603,7 @@ export class ReservationService {
 
     } catch (error: any) {
       await client.query('ROLLBACK');
-      console.error('❌ Error al completar reserva:', error.message);
+      logger.error('Error al completar reserva', error as Error);
       throw error;
     } finally {
       client.release();
@@ -647,9 +648,9 @@ export class ReservationService {
 
         await client.query('COMMIT');
 
-        console.log(`✅ Auto-release: ${result.rows.length} reservas canceladas`);
+        logger.info('Auto-release completado', { count: result.rows.length });
         result.rows.forEach(r => {
-          console.log(`   - ${r.reservation_number}`);
+          logger.debug('Reserva liberada', { reservation_number: r.reservation_number });
         });
 
         return {
@@ -669,7 +670,7 @@ export class ReservationService {
 
     } catch (error: any) {
       await client.query('ROLLBACK');
-      console.error('❌ Error en auto-release:', error.message);
+      logger.error('Error en auto-release', error as Error);
       throw error;
     } finally {
       client.release();
@@ -701,29 +702,29 @@ export class ReservationService {
       let paramCount = 1;
 
       if (data.reservation_date) {
-        updates.push(`reservation_date = $${paramCount++}`);
+        updates.push(`reservation_date = $${paramCount++}');
         values.push(data.reservation_date);
       }
 
       if (data.reservation_time) {
-        updates.push(`reservation_time = $${paramCount++}`);
+        updates.push(`reservation_time = $${paramCount++}');
         values.push(data.reservation_time);
       }
 
       if (data.party_size) {
         ValidationService.validatePartySize(data.party_size);
-        updates.push(`party_size = $${paramCount++}`);
+        updates.push(`party_size = $${paramCount++}');
         values.push(data.party_size);
       }
 
       if (data.table_id) {
         ValidationService.validateUUID(data.table_id);
-        updates.push(`table_id = $${paramCount++}`);
+        updates.push(`table_id = $${paramCount++}');
         values.push(data.table_id);
       }
 
       if (data.special_requests !== undefined) {
-        updates.push(`special_requests = $${paramCount++}`);
+        updates.push(`special_requests = $${paramCount++}');
         values.push(data.special_requests);
       }
 
@@ -731,7 +732,7 @@ export class ReservationService {
         throw new Error('No hay campos para actualizar');
       }
 
-      updates.push(`updated_at = CURRENT_TIMESTAMP`);
+      updates.push(`updated_at = CURRENT_TIMESTAMP');
       values.push(reservationId);
 
       const query = `
@@ -750,7 +751,7 @@ export class ReservationService {
 
       await client.query('COMMIT');
 
-      console.log(`✅ Reserva actualizada: ${result.rows[0].reservation_number}`);
+      logger.info('Reserva actualizada: ${result.rows[0].reservation_number}');
       return {
         success: true,
         reservation: result.rows[0],
@@ -759,7 +760,7 @@ export class ReservationService {
 
     } catch (error: any) {
       await client.query('ROLLBACK');
-      console.error('❌ Error al actualizar reserva:', error.message);
+      logger.error('Error al actualizar reserva', error as Error);
       throw error;
     } finally {
       client.release();

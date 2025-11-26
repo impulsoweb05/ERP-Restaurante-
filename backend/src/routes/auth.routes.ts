@@ -7,6 +7,7 @@ import { AuthService } from '@services/AuthService';
 import { CustomerService } from '@services/CustomerService';
 import { WaiterService } from '@services/WaiterService';
 import { authenticate, isAdmin } from '@middleware/auth.middleware';
+import { logger } from '../utils/logger';
 
 const router = Router();
 
@@ -47,7 +48,7 @@ router.post('/register/customer', async (req: Request, res: Response) => {
     });
 
   } catch (error: any) {
-    console.error('❌ Error en registro de cliente:', error.message);
+    logger.error('Error en registro de cliente', error as Error);
     res.status(500).json({
       success: false,
       error: error.message
@@ -85,7 +86,7 @@ router.post('/register/waiter', authenticate, isAdmin, async (req: Request, res:
     });
 
   } catch (error: any) {
-    console.error('❌ Error en registro de mesero:', error.message);
+    logger.error('Error en registro de mesero', error as Error);
     res.status(500).json({
       success: false,
       error: error.message
@@ -117,7 +118,7 @@ router.post('/login/customer', async (req: Request, res: Response) => {
     });
 
   } catch (error: any) {
-    console.error('❌ Error en login de cliente:', error.message);
+    logger.error('Error en login de cliente', error as Error);
     res.status(500).json({
       success: false,
       error: error.message
@@ -149,7 +150,7 @@ router.post('/login/waiter', async (req: Request, res: Response) => {
     });
 
   } catch (error: any) {
-    console.error('❌ Error en login de mesero:', error.message);
+    logger.error('Error en login de mesero', error as Error);
     res.status(500).json({
       success: false,
       error: error.message
@@ -181,7 +182,7 @@ router.post('/verify', async (req: Request, res: Response) => {
     });
 
   } catch (error: any) {
-    console.error('❌ Error en verificación de token:', error.message);
+    logger.error('Error en verificación de token', error as Error);
     res.status(500).json({
       success: false,
       error: error.message
@@ -225,7 +226,7 @@ router.get('/me', authenticate, async (req: Request, res: Response) => {
     });
 
   } catch (error: any) {
-    console.error('❌ Error al obtener datos del usuario:', error.message);
+    logger.error('Error al obtener datos del usuario', error as Error);
     res.status(500).json({
       success: false,
       error: error.message
@@ -261,7 +262,7 @@ router.post('/refresh', authenticate, async (req: Request, res: Response) => {
     });
 
   } catch (error: any) {
-    console.error('❌ Error al renovar token:', error.message);
+    logger.error('Error al renovar token', error as Error);
     res.status(500).json({
       success: false,
       error: error.message
@@ -305,7 +306,7 @@ router.put('/change-pin', authenticate, async (req: Request, res: Response) => {
     });
 
   } catch (error: any) {
-    console.error('❌ Error al cambiar PIN:', error.message);
+    logger.error('Error al cambiar PIN', error as Error);
     res.status(500).json({
       success: false,
       error: error.message

@@ -5,6 +5,7 @@
 import { Router, Request, Response } from 'express';
 import { OrderService } from '@services/OrderService';
 import { authenticate, isWaiterOrAdmin } from '@middleware/auth.middleware';
+import { logger } from '../utils/logger';
 
 const router = Router();
 
@@ -14,7 +15,7 @@ router.post('/', authenticate, async (req: Request, res: Response) => {
     const result = await OrderService.createOrder(req.body);
     res.status(201).json({ success: true, ...result });
   } catch (error: any) {
-    console.error('❌ Error al crear pedido:', error.message);
+    logger.error('Error al crear pedido', error as Error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
