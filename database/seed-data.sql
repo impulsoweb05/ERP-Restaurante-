@@ -49,7 +49,7 @@ INSERT INTO menu_categories (id, name, display_order, is_active) VALUES
 ('cat00001-0001-4001-8001-000000000007', 'BEBIDAS', 7, true),
 ('cat00001-0001-4001-8001-000000000008', 'POSTRES', 8, true),
 ('cat00001-0001-4001-8001-000000000009', 'PROMOCIONES', 9, true)
-ON CONFLICT DO NOTHING;
+ON CONFLICT (id) DO NOTHING;
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 4. MENU SUBCATEGORIES (27 Subcategorías)
@@ -99,7 +99,7 @@ INSERT INTO menu_subcategories (id, category_id, name, display_order, is_active)
 ('sub00001-0001-4001-8001-000000000025', 'cat00001-0001-4001-8001-000000000009', 'Combos Individuales', 1, true),
 ('sub00001-0001-4001-8001-000000000026', 'cat00001-0001-4001-8001-000000000009', 'Combos Familiares', 2, true),
 ('sub00001-0001-4001-8001-000000000027', 'cat00001-0001-4001-8001-000000000009', 'Promociones del Día', 3, true)
-ON CONFLICT DO NOTHING;
+ON CONFLICT (id) DO NOTHING;
 
 
 -- ═══════════════════════════════════════════════════════════════════════════
@@ -434,7 +434,7 @@ INSERT INTO order_items (id, order_id, menu_item_id, quantity, unit_price, item_
 ('orit0001-0001-4001-8001-000000000022', 'ord00001-0001-4001-8001-000000000012', 'item0001-0001-4001-8001-000000000137', 1, 18000, 0, 18000, NULL, 'pending'),
 -- Items para pedido 13 (takeout ready)
 ('orit0001-0001-4001-8001-000000000023', 'ord00001-0001-4001-8001-000000000013', 'item0001-0001-4001-8001-000000000075', 1, 35000, 0, 35000, NULL, 'ready')
-ON CONFLICT DO NOTHING;
+ON CONFLICT (id) DO NOTHING;
 
 
 -- ═══════════════════════════════════════════════════════════════════════════
@@ -475,7 +475,7 @@ INSERT INTO kitchen_queue (id, order_item_id, priority, status, assigned_station
 -- Items listos de pedido 4 y 9
 ('kq000001-0001-4001-8001-000000000005', 'orit0001-0001-4001-8001-000000000007', 5, 'ready', 'parrilla', CURRENT_TIMESTAMP - INTERVAL '25 minutes', 15),
 ('kq000001-0001-4001-8001-000000000006', 'orit0001-0001-4001-8001-000000000015', 3, 'ready', 'parrilla', CURRENT_TIMESTAMP - INTERVAL '20 minutes', 35)
-ON CONFLICT DO NOTHING;
+ON CONFLICT (id) DO NOTHING;
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- FIN DE DATOS DE EJEMPLO
