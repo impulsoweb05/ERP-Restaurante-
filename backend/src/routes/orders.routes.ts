@@ -9,6 +9,17 @@ import { logger } from '../utils/logger';
 
 const router = Router();
 
+// GET /orders - Listar todos los pedidos (Solo Admin o Meseros)
+router.get('/', authenticate, isWaiterOrAdmin, async (req: Request, res: Response) => {
+  try {
+    const result = await OrderService.getAllOrders();
+    res.json(result);
+  } catch (error: any) {
+    logger.error('Error al obtener pedidos', error as Error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // POST /orders - Crear Pedido
 router.post('/', authenticate, async (req: Request, res: Response) => {
   try {

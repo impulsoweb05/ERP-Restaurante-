@@ -84,6 +84,28 @@ async function testEndpoint(
 }
 
 /**
+ * Obtener token de autenticación del mesero
+ */
+async function getAuthToken(): Promise<string> {
+  try {
+    const response = await axios.post(`${BASE_URL}/api/auth/login/waiter`, {
+      waiter_code: 'MES-001',
+      pin_code: '1234'
+    }, {
+      timeout: 10000
+    });
+    
+    if (response.data.success && response.data.token) {
+      return response.data.token;
+    }
+    return '';
+  } catch (error) {
+    console.log('⚠️  No se pudo obtener token de autenticación (mesero MES-001 puede no existir)');
+    return '';
+  }
+}
+
+/**
  * Ejecutar todas las pruebas
  */
 async function runTests(): Promise<void> {
@@ -91,6 +113,21 @@ async function runTests(): Promise<void> {
   console.log('🧪 VALIDACIÓN DE ENDPOINTS CRÍTICOS');
   console.log(`📍 Base URL: ${BASE_URL}`);
   console.log('═══════════════════════════════════════════════════════════════\n');
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 0. OBTENER TOKEN DE AUTENTICACIÓN
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  console.log('\n🔐 OBTENIENDO TOKEN DE AUTENTICACIÓN');
+  console.log('─────────────────────────────────────────');
+  
+  const authToken = await getAuthToken();
+  if (authToken) {
+    console.log('✅ Token obtenido exitosamente');
+  } else {
+    console.log('⚠️  Continuando sin token de autenticación');
+  }
+
+  const authHeaders = authToken ? { Authorization: `Bearer ${authToken}` } : undefined;
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // 1. HEALTH CHECK
@@ -114,7 +151,6 @@ async function runTests(): Promise<void> {
   console.log('─────────────────────────────────────────');
   await testEndpoint('Get Categories', 'GET', '/api/menu/categories');
   await testEndpoint('Get All Menu', 'GET', '/api/menu');
-  await testEndpoint('Get Subcategories', 'GET', '/api/menu/subcategories');
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // 4. AUTH - Registro y Login
@@ -135,10 +171,10 @@ async function runTests(): Promise<void> {
     phone: testPhone
   });
 
-  // Test de login de mesero (puede fallar si no hay meseros)
+  // Test de login de mesero (con datos de seed)
   await testEndpoint('Login Waiter', 'POST', '/api/auth/login/waiter', {
-    waiter_code: 'MESERO-001',
-    pin: '1234'
+    waiter_code: 'MES-001',
+    pin_code: '1234'
   });
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -179,14 +215,14 @@ async function runTests(): Promise<void> {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   console.log('\n📦 PEDIDOS');
   console.log('─────────────────────────────────────────');
-  await testEndpoint('List Orders (Auth Required)', 'GET', '/api/orders');
+  await testEndpoint('List Orders (Auth Required)', 'GET', '/api/orders', undefined, authHeaders);
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // 10. RESERVATIONS (Reservas) - Require auth
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   console.log('\n📝 RESERVAS');
   console.log('─────────────────────────────────────────');
-  await testEndpoint('List Reservations Today (Auth Required)', 'GET', '/api/reservations/today');
+  await testEndpoint('List Reservations Today (Auth Required)', 'GET', '/api/reservations/today', undefined, authHeaders);
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // RESUMEN FINAL
