@@ -21,6 +21,15 @@ const STORAGE_KEYS = {
 // Session timeout (24 hours in milliseconds)
 const SESSION_TIMEOUT = 24 * 60 * 60 * 1000;
 
+// Cleanup timeout after order completion (1 minute in milliseconds)
+const ORDER_COMPLETION_CLEANUP_TIMEOUT = 60000;
+
+// Initial greeting messages per locale
+const GREETING_MESSAGES = {
+  es: 'hola',
+  en: 'hello'
+};
+
 /**
  * Restaurant Chat Widget Class
  */
@@ -395,8 +404,9 @@ class RestauranteChatWidget {
   async showWelcomeMessage() {
     this.showTypingIndicator();
     
-    // Send initial message to get welcome from backend
-    const response = await this.api.sendMessage(this.sessionId, 'hola', this.phone);
+    // Send initial message to get welcome from backend (use locale-appropriate greeting)
+    const greetingMessage = GREETING_MESSAGES[this.config.locale] || GREETING_MESSAGES.es;
+    const response = await this.api.sendMessage(this.sessionId, greetingMessage, this.phone);
     
     this.hideTypingIndicator();
 
@@ -471,7 +481,7 @@ class RestauranteChatWidget {
         // Clear session after order completion
         setTimeout(() => {
           this.clearSession();
-        }, 60000); // Clear after 1 minute
+        }, ORDER_COMPLETION_CLEANUP_TIMEOUT);
       }
     } else {
       this.showError(response.error || 'Error al procesar tu mensaje');

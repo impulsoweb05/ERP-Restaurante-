@@ -8,7 +8,8 @@ module.exports = {
     library: 'RestauranteChatWidget',
     libraryTarget: 'umd',
     libraryExport: 'default',
-    globalObject: 'this'
+    globalObject: 'this',
+    publicPath: '/dist/'
   },
   module: {
     rules: [
@@ -34,7 +35,10 @@ module.exports = {
     },
     compress: true,
     port: 8080,
-    hot: true
+    hot: true,
+    devMiddleware: {
+      publicPath: '/dist/'
+    }
   },
   mode: 'production'
 };
