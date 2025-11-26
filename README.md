@@ -4,13 +4,63 @@
 
 ## 📋 Tabla de Contenidos
 
+- [URLs de Aplicaciones](#urls-de-aplicaciones)
+- [Usuarios de Prueba](#usuarios-de-prueba)
 - [Arquitectura](#arquitectura)
 - [Requisitos](#requisitos)
 - [Instalación](#instalación)
+- [Inicio Rápido](#inicio-rápido)
+- [Instalar PWA en Móvil](#instalar-pwa-en-móvil)
+- [Widget Chat](#widget-chat)
+- [Probar Notificaciones](#probar-notificaciones)
 - [Estructura de Directorios](#estructura-de-directorios)
 - [Componentes](#componentes)
 - [Despliegue](#despliegue)
 - [Documentación](#documentación)
+
+## 🌐 URLs de Aplicaciones
+
+| Aplicación | Puerto | URL Local | URL Red Local |
+|------------|--------|-----------|---------------|
+| **PWA Cliente** | 3000 | http://localhost:3000 | http://192.168.0.6:3000 |
+| **PWA Mesero** | 3001 | http://localhost:3001 | http://192.168.0.6:3001 |
+| **PWA Cocina** | 3002 | http://localhost:3002 | http://192.168.0.6:3002 |
+| **PWA Admin** | 3003 | http://localhost:3003 | http://192.168.0.6:3003 |
+| **Backend API** | 4000 | http://localhost:4000 | http://192.168.0.6:4000 |
+| **Directus CMS** | 8055 | http://localhost:8055 | http://192.168.0.6:8055 |
+
+## 👤 Usuarios de Prueba
+
+### Clientes (10 registrados)
+
+| Nombre | Teléfono | Email |
+|--------|----------|-------|
+| María García López | 3101234567 | maria.garcia@email.com |
+| Carlos Andrés Martínez | 3209876543 | carlos.martinez@email.com |
+| Ana Lucía Rodríguez | 3156789012 | ana.rodriguez@email.com |
+| Juan Pablo Hernández | 3183456789 | juan.hernandez@email.com |
+| Laura Valentina Gómez | 3002345678 | laura.gomez@email.com |
+
+### Meseros (3 registrados)
+
+| Código | Nombre | PIN |
+|--------|--------|-----|
+| MES001 | Carlos Alberto García | 1234 |
+| MES002 | María Fernanda López | 1234 |
+| MES003 | Juan David Martínez | 1234 |
+
+### Personal de Cocina (2 registrados)
+
+| Código | Nombre | PIN |
+|--------|--------|-----|
+| COC001 | Pedro Antonio Ramírez | 1234 |
+| COC002 | Ana María Sánchez | 1234 |
+
+### Acceso Directus (Admin)
+
+- **URL:** http://localhost:8055
+- **Email:** admin@restaurante.com
+- **Contraseña:** Admin@12345
 
 ## 🏗️ Arquitectura
 
@@ -108,6 +158,173 @@ cd /home/claude/restaurante-erp/frontends/cliente
 npm run dev
 # App escuchando en http://localhost:3000
 ```
+
+## ⚡ Inicio Rápido
+
+### Iniciar Todos los Servicios (Desarrollo)
+
+Para iniciar el backend y todos los frontends con un solo comando:
+
+```bash
+# Desde la raíz del proyecto
+npm run dev:all
+```
+
+Este comando inicia:
+- Backend en puerto 4000
+- PWA Cliente en puerto 3000
+- PWA Mesero en puerto 3001
+- PWA Cocina en puerto 3002
+- PWA Admin en puerto 3003
+
+### Iniciar Servicios Individuales
+
+```bash
+# Solo Backend
+cd backend && npm run dev
+
+# Solo PWA Cliente
+cd frontends/cliente && npm run dev
+
+# Solo PWA Mesero
+cd frontends/mesero && npm run dev -- -p 3001
+
+# Solo PWA Cocina
+cd frontends/cocina && npm run dev -- -p 3002
+
+# Solo PWA Admin
+cd frontends/admin && npm run dev -- -p 3003
+```
+
+## 📱 Instalar PWA en Móvil
+
+Las aplicaciones son Progressive Web Apps (PWA) instalables en dispositivos móviles.
+
+### Android (Chrome)
+
+1. Abrir la URL de la aplicación en Chrome móvil
+   - Cliente: http://192.168.0.6:3000
+   - Mesero: http://192.168.0.6:3001
+   - Cocina: http://192.168.0.6:3002
+2. Esperar a que cargue completamente
+3. Tocar el menú (⋮) en la esquina superior derecha
+4. Seleccionar **"Instalar aplicación"** o **"Añadir a pantalla de inicio"**
+5. Confirmar la instalación
+6. La app aparecerá como icono en tu pantalla de inicio
+
+### iOS (Safari)
+
+1. Abrir la URL de la aplicación en Safari
+   - Cliente: http://192.168.0.6:3000
+   - Mesero: http://192.168.0.6:3001
+   - Cocina: http://192.168.0.6:3002
+2. Tocar el botón de compartir (□↑)
+3. Desplazar hacia abajo y seleccionar **"Añadir a pantalla de inicio"**
+4. Nombrar la aplicación y tocar **"Añadir"**
+5. La app aparecerá como icono en tu pantalla de inicio
+
+### Verificar Instalación
+
+- La PWA debe funcionar sin conexión (modo offline)
+- Debe tener su propio icono en la pantalla de inicio
+- Se abrirá en pantalla completa sin barra del navegador
+
+## 💬 Widget Chat
+
+El widget de chat es un componente embebible que puede integrarse en cualquier sitio web.
+
+### Integrar Widget en tu Sitio
+
+Añade el siguiente código antes de cerrar el tag `</body>`:
+
+```html
+<!-- Widget Chat Restaurante -->
+<script>
+  (function() {
+    var widget = document.createElement('script');
+    widget.src = 'http://localhost:3000/widget.js';
+    widget.async = true;
+    document.head.appendChild(widget);
+  })();
+</script>
+
+<!-- O si tienes el widget como componente separado -->
+<iframe 
+  src="http://localhost:3000/widget" 
+  style="position: fixed; bottom: 20px; right: 20px; width: 380px; height: 600px; border: none; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);"
+  allow="microphone"
+></iframe>
+```
+
+### Personalización del Widget
+
+```javascript
+// Configuración del widget
+window.RestauranteWidget = {
+  position: 'bottom-right',  // bottom-right, bottom-left
+  primaryColor: '#FF6B35',   // Color principal
+  greeting: '¡Hola! ¿En qué te puedo ayudar?',
+  restaurantName: 'Mi Restaurante'
+};
+```
+
+### Funcionalidades del Widget
+
+- 🛒 Ver menú y agregar al carrito
+- 📝 Hacer pedidos a domicilio
+- 📅 Reservar mesas
+- 📍 Rastrear pedidos en tiempo real
+- 💬 Chat conversacional
+
+## 🔔 Probar Notificaciones
+
+El sistema soporta tres canales de notificación:
+
+### 1. Email (SMTP Gmail)
+
+```bash
+# Probar envío de email
+curl -X POST http://localhost:4000/api/notifications/test/email \
+  -H "Content-Type: application/json" \
+  -d '{"to": "tu-email@gmail.com", "subject": "Test", "message": "Prueba de notificación"}'
+```
+
+### 2. WhatsApp (Evolution API)
+
+Requisitos:
+- Evolution API corriendo en http://192.168.0.6:8102
+- Instancia BOTRESTAURANTE configurada
+- Número de WhatsApp conectado
+
+```bash
+# Probar envío de WhatsApp
+curl -X POST http://localhost:4000/api/notifications/test/whatsapp \
+  -H "Content-Type: application/json" \
+  -d '{"phone": "573332549729", "message": "Prueba de notificación"}'
+```
+
+### 3. Telegram
+
+Requisitos:
+- Bot de Telegram creado (@BotFather)
+- Chat ID obtenido
+
+```bash
+# Probar envío de Telegram
+curl -X POST http://localhost:4000/api/notifications/test/telegram \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Prueba de notificación desde el restaurante"}'
+```
+
+### Eventos que Generan Notificaciones
+
+| Evento | Email | WhatsApp | Telegram |
+|--------|-------|----------|----------|
+| Nuevo pedido | ✅ | ✅ | ✅ |
+| Pedido confirmado | ✅ | ✅ | ❌ |
+| Pedido listo | ❌ | ✅ | ✅ |
+| Nueva reserva | ✅ | ✅ | ✅ |
+| Reserva confirmada | ✅ | ✅ | ❌ |
 
 ## 📁 Estructura de Directorios
 
@@ -368,5 +585,5 @@ MIT
 
 ---
 
-**Última actualización:** 2025-11-25
-**Estado:** 🚀 En construcción
+**Última actualización:** 2025-11-26
+**Estado:** 🚀 En desarrollo activo
