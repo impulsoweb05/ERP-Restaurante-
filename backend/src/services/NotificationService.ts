@@ -141,7 +141,7 @@ export class NotificationService {
       // 6. Marcar como enviado
       await this.markAsSent(notificationRecord.id);
 
-      logger.info('Email enviado a ${data.recipient}`);
+      logger.info(`Email enviado a ${data.recipient}`);
       return {
         success: true,
         notificationId: notificationRecord.id,
@@ -209,7 +209,7 @@ export class NotificationService {
         // 6. Marcar como enviado
         await this.markAsSent(notificationRecord.id);
 
-        logger.info('WhatsApp enviado a ${data.recipient}`);
+        logger.info(`WhatsApp enviado a ${data.recipient}`);
         return {
           success: true,
           notificationId: notificationRecord.id,
@@ -267,7 +267,7 @@ export class NotificationService {
         // 5. Marcar como enviado
         await this.markAsSent(notificationRecord.id);
 
-        logger.info('Telegram enviado a chat ${data.recipient}`);
+        logger.info(`Telegram enviado a chat ${data.recipient}`);
         return {
           success: true,
           notificationId: notificationRecord.id,

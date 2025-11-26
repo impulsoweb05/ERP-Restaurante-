@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+*.js.map
+*.d.ts.map
+
+# Environment files (keep examples)
+.env
+backend/.env
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
