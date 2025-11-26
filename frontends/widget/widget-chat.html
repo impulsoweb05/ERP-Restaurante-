@@ -659,14 +659,14 @@
         7: {
           // Niveles 7,8,12: si/no
           validation: function(msg) { 
-            return ['si', 'sí', 'no'].indexOf(msg.toLowerCase().trim()) !== -1; 
+            return ['si', 'sí', 'no'].includes(msg.toLowerCase().trim()); 
           },
           placeholder: "Escribe 'si' o 'no'...",
           errorMsg: "⚠️ Responde 'si' o 'no'"
         },
         8: {
           validation: function(msg) { 
-            return ['si', 'sí', 'no'].indexOf(msg.toLowerCase().trim()) !== -1; 
+            return ['si', 'sí', 'no'].includes(msg.toLowerCase().trim()); 
           },
           placeholder: "Escribe 'si' o 'no'...",
           errorMsg: "⚠️ Responde 'si' o 'no'"
@@ -685,14 +685,14 @@
         11: {
           // Nivel 11: opciones 1-4
           validation: function(msg) { 
-            return ['1', '2', '3', '4'].indexOf(msg.trim()) !== -1; 
+            return ['1', '2', '3', '4'].includes(msg.trim()); 
           },
           placeholder: 'Elige 1, 2, 3 o 4...',
           errorMsg: '⚠️ Opción inválida (1, 2, 3 o 4)'
         },
         12: {
           validation: function(msg) { 
-            return ['si', 'sí', 'no'].indexOf(msg.toLowerCase().trim()) !== -1; 
+            return ['si', 'sí', 'no'].includes(msg.toLowerCase().trim()); 
           },
           placeholder: "Escribe 'si' o 'no'...",
           errorMsg: "⚠️ Responde 'si' o 'no'"
@@ -861,6 +861,8 @@
         conversationHistory: [],
         unreadCount: 0,
         elements: {},
+        orderCompletionTimeoutId: null,
+        errorTimeoutId: null,
 
         /**
          * Initialize the widget
@@ -1094,7 +1096,14 @@
          * @returns {string}
          */
         adjustColor: function(color, amount) {
+          // Validate hex color format
+          if (!color || typeof color !== 'string') {
+            return color;
+          }
           var hex = color.replace('#', '');
+          if (!/^[0-9A-Fa-f]{6}$/.test(hex)) {
+            return color;
+          }
           var num = parseInt(hex, 16);
           
           var r = (num >> 16) + amount;
@@ -1275,8 +1284,13 @@
 
                 // Check if order completed (level 13)
                 if (self.currentLevel === 13) {
-                  setTimeout(function() {
+                  // Clear any existing timeout
+                  if (self.orderCompletionTimeoutId) {
+                    clearTimeout(self.orderCompletionTimeoutId);
+                  }
+                  self.orderCompletionTimeoutId = setTimeout(function() {
                     self.clearSession();
+                    self.orderCompletionTimeoutId = null;
                   }, ORDER_COMPLETION_CLEANUP_TIMEOUT);
                 }
               } else {
@@ -1432,9 +1446,15 @@
           this.elements.error.textContent = message;
           this.elements.error.classList.add('visible');
           
+          // Clear any existing timeout
+          if (this.errorTimeoutId) {
+            clearTimeout(this.errorTimeoutId);
+          }
+          
           // Auto-hide after 5 seconds
-          setTimeout(function() {
+          this.errorTimeoutId = setTimeout(function() {
             self.hideError();
+            self.errorTimeoutId = null;
           }, 5000);
         },
 
