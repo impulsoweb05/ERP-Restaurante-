@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useOrderStore } from '@/stores/orderStore';
+import { getStatusText } from '@/lib/utils';
 import type { Order } from '@/types';
 
 interface WebSocketHook {
@@ -14,15 +15,19 @@ export const useWebSocket = (token: string | null): WebSocketHook => {
   const [socket, setSocket] = useState<WebSocket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const { updateOrderStatus } = useOrderStore();
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const reconnectAttemptsRef = useRef(0);
+  const maxReconnectAttempts = 5;
 
-  useEffect(() => {
-    if (!token) return;
+  const connect = useCallback(() => {
+    if (!token) return null;
 
     const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:4000/ws';
     const ws = new WebSocket(`${wsUrl}?token=${token}`);
 
     ws.onopen = () => {
       setIsConnected(true);
+      reconnectAttemptsRef.current = 0;
       console.log('✅ WebSocket connected');
     };
 
@@ -37,7 +42,7 @@ export const useWebSocket = (token: string | null): WebSocketHook => {
             if (typeof window !== 'undefined' && 'Notification' in window) {
               if (Notification.permission === 'granted') {
                 new Notification('Estado de pedido actualizado', {
-                  body: `Tu pedido ${data.orderNumber} está ${getStatusText(data.status)}`,
+                  body: `Tu pedido ${data.orderNumber} está ${getStatusText(data.status).toLowerCase()}`,
                   icon: '/icons/icon-192x192.png',
                 });
               }
@@ -68,24 +73,43 @@ export const useWebSocket = (token: string | null): WebSocketHook => {
       setIsConnected(false);
       console.log('❌ WebSocket disconnected');
 
-      // Attempt to reconnect after 5 seconds
-      setTimeout(() => {
-        if (token) {
-          console.log('🔄 Attempting to reconnect...');
-        }
-      }, 5000);
+      // Attempt to reconnect with exponential backoff
+      if (token && reconnectAttemptsRef.current < maxReconnectAttempts) {
+        const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 30000);
+        reconnectAttemptsRef.current += 1;
+        console.log(`🔄 Attempting to reconnect in ${delay / 1000}s (attempt ${reconnectAttemptsRef.current}/${maxReconnectAttempts})...`);
+        
+        reconnectTimeoutRef.current = setTimeout(() => {
+          const newSocket = connect();
+          if (newSocket) {
+            setSocket(newSocket);
+          }
+        }, delay);
+      }
     };
 
     ws.onerror = (error) => {
       console.error('WebSocket error:', error);
     };
 
-    setSocket(ws);
+    return ws;
+  }, [token, updateOrderStatus]);
+
+  useEffect(() => {
+    const ws = connect();
+    if (ws) {
+      setSocket(ws);
+    }
 
     return () => {
-      ws.close();
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+      if (ws) {
+        ws.close();
+      }
     };
-  }, [token, updateOrderStatus]);
+  }, [connect]);
 
   const sendMessage = useCallback(
     (message: Record<string, unknown>) => {
@@ -98,15 +122,3 @@ export const useWebSocket = (token: string | null): WebSocketHook => {
 
   return { socket, isConnected, sendMessage };
 };
-
-function getStatusText(status: string): string {
-  const statusMap: Record<string, string> = {
-    pending: 'pendiente',
-    confirmed: 'confirmado',
-    preparing: 'en preparación',
-    ready: 'listo',
-    delivered: 'entregado',
-    cancelled: 'cancelado',
-  };
-  return statusMap[status] || status;
-}
