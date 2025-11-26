@@ -67,6 +67,15 @@ router.get('/subcategories', async (req: Request, res: Response) => {
       });
     }
 
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(categoryId)) {
+      return res.status(400).json({
+        success: false,
+        error: 'category_id must be a valid UUID'
+      });
+    }
+
     const subcategories = await MenuService.getSubcategoriesByCategory(categoryId);
     res.json({
       success: true,

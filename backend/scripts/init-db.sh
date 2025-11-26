@@ -21,6 +21,18 @@ DB_NAME="${DB_NAME:-restaurante_erp}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DATABASE_DIR="$SCRIPT_DIR/../../database"
 
+# Crear archivo temporal de credenciales para evitar exponer password en process list
+PGPASS_FILE=$(mktemp)
+echo "$DB_HOST:$DB_PORT:$DB_NAME:$DB_USER:$DB_PASSWORD" > "$PGPASS_FILE"
+chmod 600 "$PGPASS_FILE"
+export PGPASSFILE="$PGPASS_FILE"
+
+# Limpiar archivo de credenciales al salir
+cleanup() {
+  rm -f "$PGPASS_FILE"
+}
+trap cleanup EXIT
+
 # Verificar que los archivos SQL existen
 if [ ! -f "$DATABASE_DIR/schema.sql" ]; then
     echo "❌ Error: No se encontró el archivo schema.sql en $DATABASE_DIR"
@@ -39,7 +51,7 @@ fi
 
 # Verificar que PostgreSQL esté disponible
 echo "⏳ Esperando a que PostgreSQL esté disponible..."
-until PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c '\q' 2>/dev/null; do
+until psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c '\q' 2>/dev/null; do
   echo "⏳ PostgreSQL no está disponible aún - reintentando en 2 segundos..."
   sleep 2
 done
@@ -49,17 +61,17 @@ echo ""
 
 # Cargar schema
 echo "📋 Cargando schema..."
-PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -f "$DATABASE_DIR/schema.sql" > /dev/null 2>&1
+psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -f "$DATABASE_DIR/schema.sql" > /dev/null 2>&1
 echo "✅ Schema cargado"
 
 # Cargar datos del menú
 echo "🍽️ Cargando datos del menú (10 categorías, 50 subcategorías, 150 productos)..."
-PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -f "$DATABASE_DIR/seed-menu-complete.sql" > /dev/null 2>&1
+psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -f "$DATABASE_DIR/seed-menu-complete.sql" > /dev/null 2>&1
 echo "✅ Menú cargado"
 
 # Cargar datos de prueba
 echo "👥 Cargando datos de prueba (meseros, mesas, clientes, horarios)..."
-PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -f "$DATABASE_DIR/seed-test-data.sql" > /dev/null 2>&1
+psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -f "$DATABASE_DIR/seed-test-data.sql" > /dev/null 2>&1
 echo "✅ Datos de prueba cargados"
 
 echo ""
