@@ -1,63 +1,50 @@
 # 🍕 PWA Cliente Delivery
 
-Aplicación móvil progresiva (PWA) para clientes que piden comida a domicilio.
+App móvil para clientes que piden comida a domicilio (tipo Rappi/UberEats).
 
-## 📸 Vista Previa
+---
 
-Esta es una app móvil tipo Rappi/UberEats para que los clientes:
-- 📋 Exploren el menú por categorías
-- 🛒 Agreguen productos al carrito
-- 📦 Hagan pedidos a domicilio
-- 👤 Gestionen su perfil
+## 🚀 INSTRUCCIONES PASO A PASO
 
-## 🚀 Inicio Rápido
-
-### Requisitos
-
-- **Node.js** >= 18.0.0
-- **Backend** corriendo en `http://localhost:4000`
-
-### Instalación
+### PASO 1: Abrir Terminal en la raíz del proyecto
 
 ```bash
-cd pwa-cliente-delivery
-npm install
+cd ERP-Restaurante-
 ```
 
-### Ejecutar
+### PASO 2: Iniciar el Backend (OBLIGATORIO)
 
 ```bash
+cd backend
+npm install
 npm run dev
 ```
 
-Abre **http://localhost:3001** en tu navegador (preferiblemente en modo móvil F12 → Ctrl+Shift+M).
+✅ Debe aparecer: `Server running on port 4000`
 
-### Compilar
+**Dejar esta terminal abierta.**
+
+### PASO 3: Abrir OTRA terminal e iniciar la PWA
 
 ```bash
-npm run build
+cd ERP-Restaurante-/pwa-cliente-delivery
+npm install
+npm run dev
 ```
 
-## ⚙️ Configuración
+✅ Debe aparecer: `Local: http://localhost:3001/`
 
-### Puertos
+### PASO 4: Abrir en el navegador
 
-| Servicio | Puerto |
-|----------|--------|
-| PWA Delivery | 3001 |
-| Backend API | 4000 |
+1. Abre Chrome
+2. Ve a: **http://localhost:3001**
+3. Presiona **F12** para abrir DevTools
+4. Presiona **Ctrl+Shift+M** para modo móvil
+5. Selecciona un dispositivo (ej: iPhone 12)
 
-Para cambiar el puerto, edita `vite.config.js`:
+---
 
-```javascript
-server: {
-  port: 3001  // Cambiar aquí
-}
-```
-
-## 📱 Características
-
-### Navegación
+## 📱 Qué vas a ver
 
 | Sección | Función |
 |---------|---------|
@@ -67,41 +54,27 @@ server: {
 | 📦 Pedidos | Historial de pedidos |
 | 👤 Perfil | Login y configuración |
 
-### PWA
+---
 
-- ✅ Instalable en Android/iOS
-- ✅ Funciona offline
-- ✅ Diseño mobile-first
+## ⚙️ Puertos
 
-## 🧪 Probar
+| Servicio | Puerto | URL |
+|----------|--------|-----|
+| Backend API | 4000 | http://localhost:4000 |
+| PWA Delivery | 3001 | http://localhost:3001 |
+| PWA Admin | 3000 | http://localhost:3000 |
 
-### 1. Iniciar Backend
+---
 
-```bash
-cd ../backend
-npm run dev
-```
-
-### 2. Iniciar PWA
-
-```bash
-cd ../pwa-cliente-delivery
-npm run dev
-```
-
-### 3. Abrir en Móvil
-
-- Abre Chrome en tu celular
-- Navega a `http://TU_IP:3001`
-- O usa el modo móvil en DevTools (F12 → Ctrl+Shift+M)
-
-### 4. Flujo de Prueba
+## 🧪 Flujo de Prueba
 
 1. Ver productos en el menú
-2. Agregar productos al carrito
+2. Agregar productos al carrito (botón +)
 3. Ir al carrito y ajustar cantidades
-4. Registrarse o iniciar sesión
+4. Ir a Perfil → Registrarse
 5. Completar el pedido
+
+---
 
 ## 📁 Estructura
 
@@ -119,25 +92,18 @@ pwa-cliente-delivery/
 └── icons/              # Iconos PWA
 ```
 
-## 🔌 API Endpoints
-
-| Método | Endpoint | Uso |
-|--------|----------|-----|
-| GET | `/api/menu` | Obtener menú |
-| GET | `/api/menu/categories` | Categorías |
-| POST | `/api/auth/login/customer` | Login |
-| POST | `/api/auth/register/customer` | Registro |
-| POST | `/api/orders` | Crear pedido |
-| GET | `/api/orders?customer_id=X` | Mis pedidos |
+---
 
 ## ❓ Problemas Comunes
 
 ### No carga el menú
-- Verifica que el backend esté en `localhost:4000`
+- **Causa**: El backend no está corriendo
+- **Solución**: Ejecuta primero `cd backend && npm run dev`
+
+### Error "Cannot GET /"
+- **Causa**: npm install no se ejecutó
+- **Solución**: Ejecuta `npm install` antes de `npm run dev`
 
 ### No puedo instalar la PWA
 - Accede via `localhost` o `https://`
 - Usa Chrome o Edge
-
-### Error de conexión
-- Reinicia el servidor de desarrollo
