@@ -6,8 +6,6 @@ const CACHE_VERSION = 'v1';
 const STATIC_CACHE = `static-cache-${CACHE_VERSION}`;
 const API_CACHE = `api-cache-${CACHE_VERSION}`;
 const IMAGES_CACHE = `images-cache-${CACHE_VERSION}`;
-const DYNAMIC_CACHE = `dynamic-cache-${CACHE_VERSION}`;
-const OFFLINE_CACHE = `offline-cache-${CACHE_VERSION}`;
 
 // Assets estáticos para cachear
 const STATIC_ASSETS = [
@@ -67,9 +65,7 @@ self.addEventListener('activate', (event) => {
             .filter((name) => {
               return name.startsWith('static-cache-') ||
                      name.startsWith('api-cache-') ||
-                     name.startsWith('images-cache-') ||
-                     name.startsWith('dynamic-cache-') ||
-                     name.startsWith('offline-cache-');
+                     name.startsWith('images-cache-');
             })
             .filter((name) => {
               return !name.endsWith(CACHE_VERSION);
@@ -127,7 +123,10 @@ function isAPIRequest(url) {
  */
 function isImageRequest(url) {
   const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'];
-  const isUnsplash = url.hostname.includes('unsplash.com');
+  // Use strict hostname check for Unsplash to prevent hostname spoofing
+  const isUnsplash = url.hostname === 'unsplash.com' || 
+                     url.hostname === 'images.unsplash.com' ||
+                     url.hostname.endsWith('.unsplash.com');
   const hasImageExtension = imageExtensions.some(ext => url.pathname.toLowerCase().endsWith(ext));
   
   return isUnsplash || hasImageExtension;
@@ -207,10 +206,10 @@ async function handleStaticRequest(request) {
   const cachedResponse = await caches.match(request);
   
   const fetchPromise = fetch(request)
-    .then((response) => {
+    .then(async (response) => {
       if (response.ok) {
-        const cache = caches.open(STATIC_CACHE);
-        cache.then(c => c.put(request, response.clone()));
+        const cache = await caches.open(STATIC_CACHE);
+        await cache.put(request, response.clone());
       }
       return response;
     })
