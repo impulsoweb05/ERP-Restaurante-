@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  
+  <!-- PWA Meta Tags -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
+  <meta name="theme-color" content="#FF5722">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Delivery">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="description" content="Pide tu comida favorita a domicilio">
+  
+  <!-- Open Graph -->
+  <meta property="og:title" content="Restaurante Delivery">
+  <meta property="og:description" content="Pide comida a domicilio fácil y rápido">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="/icons/icon-512x512.png">
+  
+  <!-- Manifest -->
+  <link rel="manifest" href="/manifest.json">
+  
+  <!-- Apple Touch Icon -->
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-96x96.png">
+  
+  <!-- Styles -->
+  <link rel="stylesheet" href="/styles.css">
+  
+  <title>🍕 Delivery - Pide a Domicilio</title>
+</head>
+<body>
+  <div id="app">
+    <!-- Offline Banner -->
+    <div id="offline-banner" class="offline-banner hidden">
+      📶 Sin conexión - Modo offline
+    </div>
+
+    <!-- Main App Container -->
+    <div class="app-container">
+      
+      <!-- Header -->
+      <header class="app-header">
+        <div class="header-top">
+          <div class="location">
+            <span class="location-icon">📍</span>
+            <span class="location-text" id="user-location">Selecciona tu ubicación</span>
+          </div>
+          <button class="user-btn" id="user-btn">
+            <span class="user-icon">👤</span>
+          </button>
+        </div>
+        <div class="search-container">
+          <input type="text" class="search-input" id="search-input" placeholder="🔍 ¿Qué se te antoja hoy?">
+        </div>
+      </header>
+
+      <!-- Main Content -->
+      <main class="app-main" id="main-content">
+        <!-- Content loaded dynamically -->
+        <div class="loading-spinner">
+          <div class="spinner"></div>
+          <p>Cargando menú...</p>
+        </div>
+      </main>
+
+      <!-- Bottom Navigation -->
+      <nav class="bottom-nav">
+        <button class="nav-item active" data-view="home">
+          <span class="nav-icon">🏠</span>
+          <span class="nav-label">Inicio</span>
+        </button>
+        <button class="nav-item" data-view="search">
+          <span class="nav-icon">🔍</span>
+          <span class="nav-label">Buscar</span>
+        </button>
+        <button class="nav-item" data-view="cart">
+          <span class="nav-icon">🛒</span>
+          <span class="nav-label">Carrito</span>
+          <span class="cart-badge hidden" id="cart-badge">0</span>
+        </button>
+        <button class="nav-item" data-view="orders">
+          <span class="nav-icon">📦</span>
+          <span class="nav-label">Pedidos</span>
+        </button>
+        <button class="nav-item" data-view="profile">
+          <span class="nav-icon">👤</span>
+          <span class="nav-label">Perfil</span>
+        </button>
+      </nav>
+
+    </div>
+
+    <!-- Cart Floating Button (when items in cart) -->
+    <div class="cart-floating hidden" id="cart-floating">
+      <div class="cart-info">
+        <span class="cart-count" id="floating-cart-count">0 items</span>
+        <span class="cart-total" id="floating-cart-total">$0.00</span>
+      </div>
+      <button class="cart-btn">Ver Carrito →</button>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Modal Container -->
+    <div id="modal-container" class="modal-container hidden"></div>
+
+  </div>
+  
+  <!-- Scripts -->
+  <script type="module" src="/app.js"></script>
+</body>
+</html>
